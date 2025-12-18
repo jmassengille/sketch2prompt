@@ -1,5 +1,5 @@
-import { create } from 'zustand'
-import { temporal } from 'zundo'
+import { create, useStore as useZustandStore } from 'zustand'
+import { temporal, type TemporalState } from 'zundo'
 import type { XYPosition } from '@xyflow/react'
 import type {
   DiagramNode,
@@ -9,6 +9,12 @@ import type {
   NodeType,
 } from './types'
 import { createNodeId, createEdgeId } from './id'
+
+// State that gets tracked in history (partialized)
+type TrackedState = {
+  nodes: DiagramNode[]
+  edges: DiagramEdge[]
+}
 
 interface DiagramStore {
   nodes: DiagramNode[]
@@ -162,5 +168,8 @@ function getDefaultLabel(type: NodeType): string {
   return labels[type]
 }
 
-// Re-export temporal store for undo/redo access
-export const useTemporalStore = useStore.temporal
+// Re-export temporal store for undo/redo access with proper typing
+// useStore.temporal is a vanilla store, wrap with useZustandStore for React reactivity
+export const useTemporalStore = <T>(
+  selector: (state: TemporalState<TrackedState>) => T
+): T => useZustandStore(useStore.temporal, selector)

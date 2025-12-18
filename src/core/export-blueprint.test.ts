@@ -1,0 +1,208 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { exportBlueprint } from './export-blueprint'
+import type { DiagramNode, NodeType } from './types'
+
+// Mock template-generator
+vi.mock('./template-generator', () => ({
+  generateProjectRulesTemplate: vi.fn(
+    (_nodes, _edges, projectName: string) =>
+      `# ${projectName} - System Rules\n\nGenerated project rules.`
+  ),
+  generateComponentYamlTemplate: vi.fn(
+    (node: DiagramNode) =>
+      `spec_version: "1.0"\nname: "${node.data.label}"\ntype: "${node.data.type}"`
+  ),
+}))
+
+describe('exportBlueprint', () => {
+  const createNode = (id: string, label: string, type: NodeType): DiagramNode => ({
+    id,
+    type,
+    position: { x: 0, y: 0 },
+    data: { label, type, meta: {} },
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('validation', () => {
+    it('returns error when no nodes provided', async () => {
+      const result = await exportBlueprint([], [], {
+        projectName: 'Test Project',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toBe('Add at least one component to export.')
+      }
+    })
+
+    it('returns error when too many nodes (free tier limit)', async () => {
+      const nodes = Array.from({ length: 9 }, (_, i) =>
+        createNode(`node-${String(i)}`, `Component ${String(i)}`, 'backend')
+      )
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test Project',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error).toContain('Free tier limited to 8 nodes')
+        expect(result.error).toContain('You have 9')
+      }
+    })
+
+    it('accepts exactly 8 nodes', async () => {
+      const nodes = Array.from({ length: 8 }, (_, i) =>
+        createNode(`node-${String(i)}`, `Component ${String(i)}`, 'backend')
+      )
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test Project',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+    })
+
+    it('accepts 1 node (minimum)', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test Project',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+    })
+  })
+
+  describe('filename generation', () => {
+    it('generates slugified filename', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'My Awesome Project',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      expect(result.filename).toBe('my-awesome-project-blueprint.zip')
+    })
+
+    it('handles special characters in project name', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test@Project#123!',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      expect(result.filename).toBe('test-project-123-blueprint.zip')
+    })
+
+    it('handles empty project name', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: '',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      expect(result.filename).toBe('untitled-blueprint.zip')
+    })
+
+    it('handles project name with only special chars', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: '@#$%^&',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      expect(result.filename).toBe('untitled-blueprint.zip')
+    })
+  })
+
+  describe('AI mode fallback', () => {
+    it('uses template generation when useAI is false', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+    })
+
+    it('uses template generation when useAI true but missing API key', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test',
+        useAI: true,
+      })
+
+      expect(result.ok).toBe(true)
+    })
+
+    it('uses template generation when useAI true but incomplete config', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test',
+        useAI: true,
+        apiKey: 'test-key',
+        // Missing apiProvider and modelId
+      })
+
+      expect(result.ok).toBe(true)
+    })
+  })
+
+  describe('result structure', () => {
+    it('returns blob and filename on success', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      expect(result.blob).toBeInstanceOf(Blob)
+      expect(result.filename).toBe('test-blueprint.zip')
+    })
+
+    it('returns error message on failure', async () => {
+      const result = await exportBlueprint([], [], {
+        projectName: 'Test',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+
+      expect(typeof result.error).toBe('string')
+      expect(result.error.length).toBeGreaterThan(0)
+    })
+  })
+})

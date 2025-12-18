@@ -1,6 +1,10 @@
 # Claude Code project files
 .claude/
 
+# AI instructional files (local context)
+intent.md
+_bmad/
+
 # Dependencies
 node_modules/
 
