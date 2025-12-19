@@ -12,6 +12,10 @@ vi.mock('./template-generator', () => ({
     (node: DiagramNode) =>
       `spec_version: "1.0"\nname: "${node.data.label}"\ntype: "${node.data.type}"`
   ),
+  generateAgentProtocolTemplate: vi.fn(
+    (_nodes: DiagramNode[], projectName: string) =>
+      `# Agent Protocol\n\n## Core Principle\n\nExecute within the system rules of ${projectName}.`
+  ),
 }))
 
 describe('exportBlueprint', () => {
@@ -203,6 +207,32 @@ describe('exportBlueprint', () => {
 
       expect(typeof result.error).toBe('string')
       expect(result.error.length).toBeGreaterThan(0)
+    })
+
+    it('includes AGENT_PROTOCOL.md in ZIP', async () => {
+      const nodes: DiagramNode[] = [createNode('node-1', 'Backend', 'backend')]
+
+      const result = await exportBlueprint(nodes, [], {
+        projectName: 'Test',
+        useAI: false,
+      })
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+
+      // Verify ZIP contains AGENT_PROTOCOL.md
+      const JSZip = (await import('jszip')).default
+      // Convert Blob to ArrayBuffer for Node.js environment
+      const arrayBuffer = await result.blob.arrayBuffer()
+      const zip = await JSZip.loadAsync(arrayBuffer)
+      const agentProtocol = zip.file('AGENT_PROTOCOL.md')
+      expect(agentProtocol).not.toBeNull()
+
+      if (agentProtocol) {
+        const content = await agentProtocol.async('string')
+        expect(content).toContain('Agent Protocol')
+        expect(content).toContain('Core Principle')
+      }
     })
   })
 })

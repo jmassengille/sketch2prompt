@@ -5,6 +5,7 @@ export type AIProvider = 'anthropic' | 'openai'
 
 export interface GenerationResult {
   projectRules: string
+  agentProtocol: string
   componentSpecs: Map<string, string> // nodeId -> YAML content
 }
 
@@ -50,6 +51,16 @@ export async function generateWithAI(
       'PROJECT_RULES.md'
     )
 
+    // Generate AGENT_PROTOCOL.md
+    const agentProtocolPrompt = buildAgentProtocolPrompt(nodes, projectName)
+    const agentProtocol = await callAI(
+      client,
+      agentProtocolPrompt,
+      modelId,
+      2500,
+      'AGENT_PROTOCOL.md'
+    )
+
     // Generate component specs in parallel
     const componentPromises = nodes.map(async (node) => {
       const prompt = buildComponentSpecPrompt(node, nodes, edges)
@@ -70,6 +81,7 @@ export async function generateWithAI(
 
     return {
       projectRules,
+      agentProtocol,
       componentSpecs,
     }
   } catch (error) {
@@ -85,30 +97,23 @@ export async function generateWithAI(
 }
 
 /**
- * Call OpenAI API (works for both OpenAI and Anthropic)
+ * Call AI API using OpenAI Responses API
+ * @see https://platform.openai.com/docs/api-reference/responses
  */
 async function callAI(
   client: OpenAI,
   prompt: string,
   modelId: string,
-  maxTokens: number,
+  _maxTokens: number,
   taskDescription: string
 ): Promise<string> {
   try {
-    const response = await client.chat.completions.create({
+    const response = await client.responses.create({
       model: modelId,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: maxTokens,
-      temperature: 0.7,
+      input: prompt,
     })
 
-    const firstChoice = response.choices[0]
-    const content = firstChoice?.message.content
+    const content = response.output_text
     if (!content) {
       throw new Error(`No content returned for ${taskDescription}`)
     }
@@ -281,14 +286,25 @@ REQUIRED FIELDS (all specs):
 - description: |
     (2-3 sentence description based on the component name and type)
 - responsibilities: (3-5 core responsibilities as bullet points)
-- anti_responsibilities: (3-5 "NEVER" statements with rationale)
+- anti_responsibilities: (3-5 strings using format: "NEVER [action] — [reason]")
 
-RECOMMENDED FIELDS (all specs):
-- integration_points: (list connections to other components)
-- tech_stack:
-    primary: (main technology)
-    dependencies: (key packages with version constraints)
-    references: (URLs to official docs/package indexes)
+INTEGRATION_POINTS (for each connected component):
+- component: (name of connected component)
+- direction: "inbound" | "outbound" | "bidirectional"
+- purpose: (why this integration exists)
+- contract:
+    request: (request shape, e.g., "{ userId: string }")
+    response: (response shape, e.g., "{ user: User }")
+
+TECH_STACK:
+- primary: (main technology)
+- baseline_deps: (list with name, version, purpose for each)
+- references: (list of official docs URLs as simple strings)
+
+VALIDATION SECTION (required):
+- exit_criteria: (list of completion criteria, must include "Status file updated with component completion")
+- smoke_tests: (minimal verification steps)
+- integration_checks: (based on integration_points)
 
 TYPE-SPECIFIC FIELDS for "${node.data.type}":
 ${getTypeSpecificFieldsPrompt(node.data.type)}
@@ -296,11 +312,92 @@ ${getTypeSpecificFieldsPrompt(node.data.type)}
 IMPORTANT INSTRUCTIONS:
 - Output ONLY valid YAML with NO markdown code fences, NO explanations
 - Be specific and realistic based on the component name "${node.data.label}"
-- Anti-responsibilities are CRITICAL - include at least 3 meaningful "NEVER" statements
-- For tech_stack.references, use real URLs to official documentation
+- Anti-responsibilities MUST use format: "NEVER [action] — [reason]"
+- References are simple strings, NOT objects
+- Validation section is required with exit_criteria, smoke_tests, and integration_checks
 - Keep token count reasonable (~400-700 tokens)
 - Use proper YAML syntax with correct indentation (2 spaces)
 - Start directly with: spec_version: "1.0"`
+}
+
+/**
+ * Build prompt for AGENT_PROTOCOL.md generation
+ */
+function buildAgentProtocolPrompt(
+  nodes: DiagramNode[],
+  projectName: string
+): string {
+  // Detect primary stacks from nodes
+  const stacks = new Set<string>()
+  nodes.forEach((node) => {
+    const techStack = node.data.meta.techStack ?? []
+    techStack.forEach((tech) => {
+      const lower = tech.toLowerCase()
+      if (lower.includes('python') || lower.includes('fastapi') || lower.includes('django')) {
+        stacks.add('Python')
+      }
+      if (lower.includes('typescript') || lower.includes('node') || lower.includes('express') || lower.includes('react') || lower.includes('next')) {
+        stacks.add('TypeScript/Node')
+      }
+      if (lower.includes('go') || lower.includes('golang')) {
+        stacks.add('Go')
+      }
+      if (lower.includes('rust')) {
+        stacks.add('Rust')
+      }
+    })
+  })
+  const detectedStacks = stacks.size > 0 ? Array.from(stacks).join(', ') : 'General'
+
+  return `You are generating an AGENT_PROTOCOL.md file for an AI coding assistant. This provides workflow guidance for implementing the project.
+
+PROJECT: ${projectName}
+DETECTED STACKS: ${detectedStacks}
+COMPONENTS: ${String(nodes.length)} total
+
+YOUR TASK:
+Generate a complete AGENT_PROTOCOL.md following this EXACT 6-section structure. Output ONLY the markdown content with NO code fences, NO explanations.
+
+REQUIRED SECTIONS (in order):
+
+1. **Core Principle** - Include:
+   - Statement that the system has rules and agent should execute within them
+   - Instructions to read PROJECT_RULES.md first
+   - Instructions to load only the active component spec
+
+2. **Status Tracking (MANDATORY)** - Include:
+   - Statement that tracking is mandatory
+   - Generic status file reference (e.g., STATUS.md)
+   - Recommended structure: Current Phase, Active Component, Current Milestone, Progress, Blockers, Last Updated
+   - Rules: create on first task, update after features/milestones, update on component switch, update when blocked, read on session start
+
+3. **Workflow Guidance** - Include:
+   - Four phases: Index, Plan, Implement, Verify
+   - Brief description of each phase
+   - Emphasis on updating status after each phase
+
+4. **Scope Discipline** - Include:
+   - ALWAYS subsection (5-6 mandatory rules including status updates)
+   - NEVER subsection (5-6 forbidden patterns)
+   - PREFER subsection (4-5 preferences with "X over Y" format)
+
+5. **Library Policy** - Include:
+   - "Search before building" principle
+   - Order: current codebase utilities → project dependencies → external packages
+   - List of use cases for established libraries
+   - When custom code is acceptable
+
+6. **Code Standards** - Include:
+   - Dynamic table based on detected stacks
+   - For each stack: standards reference (e.g., PEP 8, ESLint)
+   - General principles: modular, extensible, debuggable, testable
+
+IMPORTANT INSTRUCTIONS:
+- Be professional and actionable
+- Keep guidance generic enough to work across IDEs
+- Emphasize status tracking throughout
+- Output markdown ONLY - no code fences, just the content
+- Start directly with: # Agent Protocol`
 }
 
 /**

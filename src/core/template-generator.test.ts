@@ -292,7 +292,11 @@ describe('generateComponentYamlTemplate', () => {
 
     expect(result).toContain('integration_points:')
     expect(result).toContain('component: Backend')
-    expect(result).toContain('Fetches data via REST')
+    expect(result).toContain('direction: outbound')
+    expect(result).toContain('purpose: Fetches data via REST')
+    expect(result).toContain('contract:')
+    expect(result).toContain('request:')
+    expect(result).toContain('response:')
   })
 
   it('includes type-specific default responsibilities', () => {
@@ -319,15 +323,15 @@ describe('generateComponentYamlTemplate', () => {
 
     const result = generateComponentYamlTemplate(node, [], [node])
 
-    // Enhanced format includes pattern, reason, and instead fields
-    expect(result).toContain('pattern: NEVER')
-    expect(result).toContain('reason:')
-    expect(result).toContain('instead:')
+    // Anti-responsibilities are now strings in format "pattern — reason"
+    expect(result).toContain('anti_responsibilities:')
+    expect(result).toContain('NEVER')
+    expect(result).toContain('—') // em dash separator
     // Check for actual backend anti-responsibility content
     expect(result).toContain('trust client-provided data without validation')
   })
 
-  it('includes type-specific default constraints', () => {
+  it('does not include constraints field', () => {
     const node: DiagramNode = {
       id: 'node-1',
       type: 'backend',
@@ -337,11 +341,24 @@ describe('generateComponentYamlTemplate', () => {
 
     const result = generateComponentYamlTemplate(node, [], [node])
 
-    expect(result).toContain('constraints:')
-    expect(result).toContain('security:')
-    expect(result).toContain('performance:')
-    expect(result).toContain('architecture:')
-    expect(result).toContain('Validate ALL inputs')
+    // Constraints field should not exist in new format
+    expect(result).not.toContain('constraints:')
+  })
+
+  it('includes validation section', () => {
+    const node: DiagramNode = {
+      id: 'node-1',
+      type: 'backend',
+      position: { x: 0, y: 0 },
+      data: { label: 'API', type: 'backend', meta: {} },
+    }
+
+    const result = generateComponentYamlTemplate(node, [], [node])
+
+    expect(result).toContain('validation:')
+    expect(result).toContain('exit_criteria:')
+    expect(result).toContain('smoke_tests:')
+    expect(result).toContain('integration_checks:')
   })
 
   it('includes AI markers for elaboration', () => {

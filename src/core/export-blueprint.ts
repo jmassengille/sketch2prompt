@@ -52,7 +52,8 @@ function slugify(text: string): string {
  * Export diagram as a blueprint ZIP file
  *
  * Structure:
- * - PROJECT_RULES.md (master instruction file)
+ * - PROJECT_RULES.md (system constitution)
+ * - AGENT_PROTOCOL.md (workflow guidance)
  * - specs/*.yaml (per-component specs)
  * - diagram.json (re-import capability)
  */
@@ -75,6 +76,7 @@ export async function exportBlueprint(
 
   try {
     let projectRules: string
+    let agentProtocol: string
     const componentSpecs = new Map<string, string>()
 
     if (options.useAI && options.apiKey && options.apiProvider && options.modelId) {
@@ -89,15 +91,17 @@ export async function exportBlueprint(
         options.modelId
       )
       projectRules = result.projectRules
+      agentProtocol = result.agentProtocol
       for (const [nodeId, yaml] of result.componentSpecs) {
         componentSpecs.set(nodeId, yaml)
       }
     } else {
       // Template-based generation
-      const { generateProjectRulesTemplate, generateComponentYamlTemplate } = await import(
+      const { generateProjectRulesTemplate, generateComponentYamlTemplate, generateAgentProtocolTemplate } = await import(
         './template-generator'
       )
       projectRules = generateProjectRulesTemplate(nodes, edges, options.projectName)
+      agentProtocol = generateAgentProtocolTemplate(nodes, options.projectName)
       for (const node of nodes) {
         const yaml = generateComponentYamlTemplate(node, edges, nodes)
         componentSpecs.set(node.id, yaml)
@@ -109,6 +113,9 @@ export async function exportBlueprint(
 
     // Add PROJECT_RULES.md
     zip.file('PROJECT_RULES.md', projectRules)
+
+    // Add AGENT_PROTOCOL.md
+    zip.file('AGENT_PROTOCOL.md', agentProtocol)
 
     // Add specs folder with component YAMLs
     const specsFolder = zip.folder('specs')

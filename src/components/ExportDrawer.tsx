@@ -300,7 +300,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                   onChange={(e) => {
                     setProjectName(e.target.value)
                   }}
-                  placeholder="my-awesome-project"
+                  placeholder="my-project"
                   className="w-full rounded-lg border border-border bg-bg-secondary px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
