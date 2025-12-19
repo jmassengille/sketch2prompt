@@ -1,59 +1,150 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* ==============================================
+     DESIGN SYSTEM - sketch2prompt
+     Technical precision aesthetic: clean, crisp, professional
+     Base unit: 4px
+     ============================================== */
+
+  /* Core Colors - Light Mode */
   --color-bg: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-bg-tertiary: #f3f4f6;
-  --color-text: #111827;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #9ca3af;
-  --color-border: #e5e7eb;
+  --color-bg-secondary: #f8fafc;
+  --color-bg-tertiary: #f1f5f9;
+  --color-text: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
   --color-border-focus: #3b82f6;
 
+  /* Primary Brand */
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-primary-text: #ffffff;
+  --color-primary-subtle: rgba(59, 130, 246, 0.1);
 
+  /* Node Type Colors */
   --color-node-agent: #3b82f6;
   --color-node-tool: #10b981;
   --color-node-data: #8b5cf6;
   --color-node-system: #6b7280;
   --color-node-note: #f59e0b;
 
+  /* Semantic Colors */
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
+  --color-info: #0ea5e9;
 
-  --font-family-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-family-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Typography */
+  --font-family-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
+  /* Font Sizes - More readable minimum */
+  --text-xs: 0.6875rem;   /* 11px - minimum readable */
+  --text-sm: 0.8125rem;   /* 13px */
+  --text-base: 0.875rem;  /* 14px */
+  --text-lg: 1rem;        /* 16px */
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  /* Border Radius */
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.375rem;  /* 6px */
+  --radius-lg: 0.5rem;    /* 8px */
+  --radius-xl: 0.75rem;   /* 12px */
+
+  /* Shadows - Light Mode */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
+  /* Blueprint accent colors (from OnboardingWizard) */
+  --color-blueprint-accent: #00d4ff;
+  --color-blueprint-accent-dim: rgba(0, 212, 255, 0.3);
+  --color-blueprint-accent-subtle: rgba(0, 212, 255, 0.1);
+
+  /* Blueprint backgrounds */
+  --color-blueprint-bg: #0a0f1a;
+  --color-blueprint-card: rgba(15, 23, 42, 0.8);
+
+  /* Blueprint effects */
+  --shadow-glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+  --shadow-glow-sm-cyan: 0 0 12px rgba(0, 212, 255, 0.3);
+
+  /* Canvas & Surface System - More distinct elevations */
+  --color-canvas-bg: #f8fafc;
+  --color-surface-0: #ffffff;
+  --color-surface-1: #f8fafc;
+  --color-surface-2: #f1f5f9;
+  --color-surface-hover: #f1f5f9;
+
+  /* Blueprint Grid (subtle) */
+  --color-grid-line: rgba(15, 23, 42, 0.04);
+  --color-grid-line-major: rgba(15, 23, 42, 0.08);
+
+  /* Card Shadows - Light mode - Enhanced for better depth */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-card-selected: 0 0 0 2px var(--color-primary), 0 4px 12px rgba(59, 130, 246, 0.15);
+  --shadow-card-dragging: 0 16px 32px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+
+  /* Interactive States */
+  --transition-fast: 100ms ease-out;
+  --transition-base: 150ms ease-out;
+  --transition-slow: 200ms ease-out;
 }
 
-/* Dark mode via .dark class on html element */
+/* ==============================================
+   DARK MODE - Higher contrast, better readability
+   ============================================== */
 .dark {
-  --color-bg: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-tertiary: #334155;
-  --color-text: #f1f5f9;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #64748b;
-  --color-border: #334155;
+  /* Core Colors - Dark Mode with better contrast */
+  --color-bg: #0c111b;
+  --color-bg-secondary: #131927;
+  --color-bg-tertiary: #1a2235;
+  --color-text: #f8fafc;
+  --color-text-secondary: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-text-subtle: #64748b;
+  --color-border: #1e293b;
+  --color-border-subtle: #1a2235;
   --color-border-focus: #60a5fa;
 
+  /* Primary Brand - Dark */
   --color-primary: #60a5fa;
   --color-primary-hover: #3b82f6;
+  --color-primary-subtle: rgba(96, 165, 250, 0.15);
 
+  /* Node Type Colors - Brighter for dark mode */
   --color-node-agent: #60a5fa;
   --color-node-tool: #34d399;
   --color-node-data: #a78bfa;
   --color-node-system: #9ca3af;
   --color-node-note: #fbbf24;
+
+  /* Canvas & Surface - Dark - Clear elevation steps */
+  --color-canvas-bg: #0a0e17;
+  --color-surface-0: #0f1520;
+  --color-surface-1: #151c2c;
+  --color-surface-2: #1e2740;
+  --color-surface-hover: #1e2740;
+
+  /* Blueprint Grid - Dark */
+  --color-grid-line: rgba(34, 211, 238, 0.03);
+  --color-grid-line-major: rgba(34, 211, 238, 0.06);
+
+  /* Card Shadows - Dark mode - Enhanced glow effect */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.5), 0 16px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-card-selected: 0 0 0 2px var(--color-primary), 0 0 24px rgba(96, 165, 250, 0.25), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-card-dragging: 0 16px 32px rgba(0, 0, 0, 0.6), 0 32px 64px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* Note: ShadCN variables for dark mode are defined in :root.dark at end of file */
 }
 
 html {
@@ -123,4 +214,297 @@ body {
 
 .duration-300 {
   animation-duration: 300ms;
+}
+
+@keyframes lift {
+  from {
+    transform: translateY(0);
+    box-shadow: var(--shadow-card);
+  }
+  to {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--color-blueprint-accent-dim);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--color-blueprint-accent);
+  }
+}
+
+/* Corner bracket decorations (blueprint aesthetic) */
+.corner-brackets {
+  position: relative;
+}
+
+.corner-brackets::before,
+.corner-brackets::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--color-blueprint-accent);
+  border-style: solid;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+
+.corner-brackets::before {
+  top: -3px;
+  left: -3px;
+  border-width: 1.5px 0 0 1.5px;
+}
+
+.corner-brackets::after {
+  bottom: -3px;
+  right: -3px;
+  border-width: 0 1.5px 1.5px 0;
+}
+
+.corner-brackets.active::before,
+.corner-brackets.active::after {
+  opacity: 0.7;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* Dark mode overrides for shadcn variables - MUST come after :root */
+:root.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ==============================================
+   UTILITY CLASSES - Interactive states & animations
+   ============================================== */
+
+/* Interactive element base - ensures cursor and focus states */
+.interactive {
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.interactive:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Button hover states - consistent lift effect */
+.btn-hover {
+  transition: all var(--transition-base);
+}
+
+.btn-hover:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-hover:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Card hover - more pronounced lift */
+.card-hover {
+  transition: all var(--transition-slow);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Input focus enhancement */
+.input-focus {
+  transition: all var(--transition-base);
+}
+
+.input-focus:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+  outline: none;
+}
+
+/* Label styling - consistent across app */
+.label-sm {
+  font-family: var(--font-family-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+/* Better scrollbar for panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Dropdown animation */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-animate {
+  animation: dropdown-in var(--transition-base) ease-out;
+}
+
+/* Chip hover effect */
+.chip-hover {
+  transition: all var(--transition-fast);
+}
+
+.chip-hover:hover {
+  filter: brightness(0.95);
+  transform: scale(1.02);
+}
+
+.dark .chip-hover:hover {
+  filter: brightness(1.1);
 }
