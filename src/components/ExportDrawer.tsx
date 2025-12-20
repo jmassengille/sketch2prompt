@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronRight,
   Sparkles,
-  FileText,
   Loader2,
   AlertCircle,
 } from 'lucide-react'
@@ -313,32 +312,70 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                 />
               </div>
 
-              {/* AI Settings (Collapsible) */}
-              <div className="rounded-lg border border-border">
+              {/* AI Enhancement Section */}
+              <div
+                className={`relative rounded-xl overflow-hidden transition-all duration-300 ${
+                  useAI
+                    ? 'bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 ring-1 ring-amber-500/30'
+                    : 'bg-gradient-to-br from-[var(--color-workshop-elevated)] to-[var(--color-workshop-surface)] ring-1 ring-[var(--color-workshop-border)]'
+                }`}
+              >
+                {/* Shimmer effect when AI is active */}
+                {useAI && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/10 to-transparent animate-[shimmer_3s_ease-in-out_infinite] pointer-events-none" />
+                )}
+
                 <button
                   onClick={() => {
                     setSettingsExpanded(!settingsExpanded)
                   }}
-                  className="cursor-pointer flex w-full items-center justify-between px-4 py-3 text-left"
+                  className="cursor-pointer relative flex w-full items-center justify-between px-4 py-3.5 text-left"
                 >
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-medium text-text">
-                      AI Enhancement (Optional)
-                    </span>
+                  <div className="flex items-center gap-3">
+                    {/* Sparkle icon with background */}
+                    <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg ${
+                      useAI
+                        ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/25'
+                        : 'bg-[var(--color-workshop-elevated)] ring-1 ring-[var(--color-workshop-border)]'
+                    }`}>
+                      <Sparkles className={`h-4 w-4 ${useAI ? 'text-white' : 'text-[var(--color-workshop-text-muted)]'}`} />
+                    </div>
+
+                    <div className="flex flex-col">
+                      <span className={`text-sm font-semibold ${useAI ? 'text-amber-200' : 'text-[var(--color-workshop-text)]'}`}>
+                        AI-Powered Specs
+                      </span>
+                      <span className={`text-xs ${useAI ? 'text-amber-300/70' : 'text-[var(--color-workshop-text-muted)]'}`}>
+                        {useAI ? 'Smarter, context-aware output' : 'Add your API key to unlock'}
+                      </span>
+                    </div>
                   </div>
-                  {settingsExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-text-muted" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-text-muted" />
-                  )}
+
+                  <div className="flex items-center gap-2">
+                    {/* Status badge */}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      useAI
+                        ? 'bg-amber-400/20 text-amber-300 ring-1 ring-amber-400/30'
+                        : 'bg-[var(--color-workshop-bg)] text-[var(--color-workshop-text-subtle)] ring-1 ring-[var(--color-workshop-border)]'
+                    }`}>
+                      {useAI ? 'Active' : 'Off'}
+                    </span>
+
+                    {settingsExpanded ? (
+                      <ChevronDown className={`h-4 w-4 ${useAI ? 'text-amber-400' : 'text-[var(--color-workshop-text-muted)]'}`} />
+                    ) : (
+                      <ChevronRight className={`h-4 w-4 ${useAI ? 'text-amber-400' : 'text-[var(--color-workshop-text-muted)]'}`} />
+                    )}
+                  </div>
                 </button>
 
                 {settingsExpanded && (
-                  <div className="space-y-3 border-t border-border px-4 py-3">
+                  <div className={`space-y-3 border-t px-4 py-4 ${
+                    useAI ? 'border-amber-500/20' : 'border-[var(--color-workshop-border)]'
+                  }`}>
                     {/* Provider */}
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                      <label className={`mb-1.5 block text-xs font-medium ${useAI ? 'text-amber-300/70' : 'text-[var(--color-workshop-text-muted)]'}`}>
                         Provider
                       </label>
                       <select
@@ -346,7 +383,11 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                         onChange={(e) => {
                           setApiProvider(e.target.value as AIProvider)
                         }}
-                        className="cursor-pointer w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className={`cursor-pointer w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                          useAI
+                            ? 'border-amber-500/30 bg-black/20 text-amber-100 focus:ring-amber-500/50'
+                            : 'border-[var(--color-workshop-border)] bg-[var(--color-workshop-bg)] text-[var(--color-workshop-text)] focus:ring-[var(--color-wizard-accent)]/50'
+                        }`}
                       >
                         <option value="anthropic">Anthropic (Claude)</option>
                         <option value="openai">OpenAI (GPT)</option>
@@ -355,7 +396,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
 
                     {/* API Key */}
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                      <label className={`mb-1.5 block text-xs font-medium ${useAI ? 'text-amber-300/70' : 'text-[var(--color-workshop-text-muted)]'}`}>
                         API Key
                       </label>
                       <div className="flex gap-2">
@@ -370,12 +411,20 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                               ? 'sk-ant-...'
                               : 'sk-...'
                           }
-                          className="flex-1 rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className={`flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                            useAI
+                              ? 'border-amber-500/30 bg-black/20 text-amber-100 placeholder:text-amber-300/40 focus:ring-amber-500/50'
+                              : 'border-[var(--color-workshop-border)] bg-[var(--color-workshop-bg)] text-[var(--color-workshop-text)] placeholder:text-[var(--color-workshop-text-muted)] focus:ring-[var(--color-wizard-accent)]/50'
+                          }`}
                         />
                         {apiKey && (
                           <button
                             onClick={clearApiKey}
-                            className="rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-muted transition-colors hover:bg-bg-secondary hover:text-text"
+                            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                              useAI
+                                ? 'border-amber-500/30 text-amber-300 hover:bg-amber-500/20'
+                                : 'border-[var(--color-workshop-border)] text-[var(--color-workshop-text-muted)] hover:bg-[var(--color-workshop-elevated)]'
+                            }`}
                           >
                             Clear
                           </button>
@@ -385,7 +434,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
 
                     {/* Model */}
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-text-muted">
+                      <label className={`mb-1.5 block text-xs font-medium ${useAI ? 'text-amber-300/70' : 'text-[var(--color-workshop-text-muted)]'}`}>
                         Model
                       </label>
                       <input
@@ -395,30 +444,20 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                           setModelId(e.target.value)
                         }}
                         placeholder="Model ID"
-                        className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                          useAI
+                            ? 'border-amber-500/30 bg-black/20 text-amber-100 placeholder:text-amber-300/40 focus:ring-amber-500/50'
+                            : 'border-[var(--color-workshop-border)] bg-[var(--color-workshop-bg)] text-[var(--color-workshop-text)] placeholder:text-[var(--color-workshop-text-muted)] focus:ring-[var(--color-wizard-accent)]/50'
+                        }`}
                       />
                     </div>
 
-                    {/* Mode indicator */}
-                    <div
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
-                        useAI
-                          ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'
-                          : 'bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400'
-                      }`}
-                    >
-                      {useAI ? (
-                        <>
-                          <Sparkles className="h-4 w-4" />
-                          AI-enhanced specs enabled
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="h-4 w-4" />
-                          Template mode (add API key for AI enhancement)
-                        </>
-                      )}
-                    </div>
+                    {/* What AI does - value prop (only when not active) */}
+                    {!useAI && (
+                      <div className="rounded-lg bg-[var(--color-workshop-bg)]/50 p-3 text-xs text-[var(--color-workshop-text-muted)]">
+                        <span className="font-medium text-[var(--color-workshop-text)]">What AI adds:</span> Richer component descriptions, smarter dependency detection, and context-aware implementation hints.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
