@@ -11,7 +11,6 @@ export type Archetype =
   | 'marketplace'
   | 'content'
   | 'devtool'
-  | 'mobile'
   | 'custom'
 
 export type ComponentDefinition = {
@@ -20,6 +19,8 @@ export type ComponentDefinition = {
   label: string
   defaultTech: string
   techAlternatives: string[] // max 3
+  /** Maximum number of tech choices. 1 = single primary tech only. undefined = unlimited */
+  maxTechChoices?: number
 }
 
 export type ArchetypeConfig = {
@@ -36,22 +37,24 @@ export type ArchetypeConfig = {
 // ============================================================================
 
 const COMPONENTS = {
-  // Frontend
+  // Frontend - single framework choice
   frontend: {
     id: 'frontend',
     type: 'frontend' as NodeType,
     label: 'Web App',
     defaultTech: 'Next.js',
     techAlternatives: ['React', 'Vue', 'SvelteKit'],
+    maxTechChoices: 1,
   },
 
-  // Backend
+  // Backend - single runtime choice
   api: {
     id: 'api',
     type: 'backend' as NodeType,
     label: 'API Server',
     defaultTech: 'Node.js',
     techAlternatives: ['FastAPI', 'Go', 'Rails'],
+    maxTechChoices: 1,
   },
   webhooks: {
     id: 'webhooks',
@@ -59,47 +62,53 @@ const COMPONENTS = {
     label: 'Webhook Handler',
     defaultTech: 'Node.js',
     techAlternatives: ['FastAPI', 'Go'],
+    maxTechChoices: 1,
   },
 
-  // Auth
+  // Auth - single provider choice
   auth: {
     id: 'auth',
     type: 'auth' as NodeType,
     label: 'Auth Service',
-    defaultTech: 'Clerk',
-    techAlternatives: ['Auth0', 'Supabase Auth', 'NextAuth'],
+    defaultTech: 'Supabase Auth',
+    techAlternatives: ['Clerk', 'Auth0', 'NextAuth'],
+    maxTechChoices: 1,
   },
 
-  // Storage
+  // Storage - database is single choice, file storage can vary
   database: {
     id: 'database',
     type: 'storage' as NodeType,
     label: 'Database',
-    defaultTech: 'PostgreSQL',
-    techAlternatives: ['MySQL', 'MongoDB', 'Supabase'],
+    defaultTech: 'Supabase',
+    techAlternatives: ['PostgreSQL', 'PlanetScale', 'MongoDB'],
+    maxTechChoices: 1,
   },
   fileStorage: {
     id: 'file-storage',
     type: 'storage' as NodeType,
     label: 'File Storage',
-    defaultTech: 'AWS S3',
-    techAlternatives: ['Cloudflare R2', 'Supabase Storage'],
+    defaultTech: 'Supabase Storage',
+    techAlternatives: ['AWS S3', 'Cloudflare R2'],
+    maxTechChoices: 2, // backup + user uploads is valid
   },
   cache: {
     id: 'cache',
     type: 'storage' as NodeType,
     label: 'Cache',
     defaultTech: 'Redis',
-    techAlternatives: ['Memcached', 'Upstash'],
+    techAlternatives: ['Upstash', 'Memcached'],
+    maxTechChoices: 1,
   },
 
-  // External
+  // External - payments usually single, email can have multiple use cases
   payments: {
     id: 'payments',
     type: 'external' as NodeType,
     label: 'Payment Gateway',
     defaultTech: 'Stripe',
     techAlternatives: ['Paddle', 'LemonSqueezy'],
+    maxTechChoices: 1,
   },
   search: {
     id: 'search',
@@ -107,6 +116,7 @@ const COMPONENTS = {
     label: 'Search Service',
     defaultTech: 'Meilisearch',
     techAlternatives: ['Algolia', 'Typesense'],
+    maxTechChoices: 1,
   },
   email: {
     id: 'email',
@@ -114,6 +124,7 @@ const COMPONENTS = {
     label: 'Email Service',
     defaultTech: 'Resend',
     techAlternatives: ['SendGrid', 'Postmark'],
+    maxTechChoices: 2, // transactional + marketing can differ
   },
   pushNotifications: {
     id: 'push-notifications',
@@ -121,6 +132,7 @@ const COMPONENTS = {
     label: 'Push Service',
     defaultTech: 'Firebase FCM',
     techAlternatives: ['OneSignal', 'Expo Push'],
+    maxTechChoices: 1,
   },
   analytics: {
     id: 'analytics',
@@ -128,15 +140,17 @@ const COMPONENTS = {
     label: 'Analytics',
     defaultTech: 'PostHog',
     techAlternatives: ['Mixpanel', 'Amplitude'],
+    maxTechChoices: 2, // product + marketing analytics can differ
   },
 
-  // Background
+  // Background - single queue system
   backgroundJobs: {
     id: 'background-jobs',
     type: 'background' as NodeType,
     label: 'Job Queue',
-    defaultTech: 'BullMQ',
-    techAlternatives: ['Inngest', 'Temporal'],
+    defaultTech: 'Inngest',
+    techAlternatives: ['BullMQ', 'Trigger.dev'],
+    maxTechChoices: 1,
   },
 } satisfies Record<string, ComponentDefinition>
 
@@ -157,6 +171,7 @@ export const ARCHETYPE_CONFIGS: ArchetypeConfig[] = [
       COMPONENTS.auth,
       COMPONENTS.database,
       COMPONENTS.payments,
+      COMPONENTS.email,
     ],
   },
   {
@@ -171,6 +186,7 @@ export const ARCHETYPE_CONFIGS: ArchetypeConfig[] = [
       COMPONENTS.database,
       COMPONENTS.payments,
       COMPONENTS.search,
+      COMPONENTS.email,
     ],
   },
   {
@@ -191,18 +207,11 @@ export const ARCHETYPE_CONFIGS: ArchetypeConfig[] = [
     label: 'Developer Tool',
     description: 'Developers integrate your service into their apps',
     platform: 'web',
-    components: [COMPONENTS.api, COMPONENTS.auth, COMPONENTS.webhooks],
-  },
-  {
-    id: 'mobile',
-    label: 'Mobile App',
-    description: 'Native iOS/Android with backend services',
-    platform: 'mobile',
     components: [
       COMPONENTS.api,
       COMPONENTS.auth,
       COMPONENTS.database,
-      COMPONENTS.pushNotifications,
+      COMPONENTS.webhooks,
     ],
   },
   {
@@ -233,10 +242,16 @@ export type CategoryConfig = {
 
 export const CATEGORY_CONFIGS: CategoryConfig[] = [
   {
+    id: 'infra',
+    label: 'Core Infrastructure',
+    tooltip: 'Your app\'s main parts — the website and the server',
+    componentIds: ['frontend', 'api'],
+  },
+  {
     id: 'data',
     label: 'Data & Storage',
     tooltip: 'Where your app saves information — user data, files, etc.',
-    componentIds: ['database', 'file-storage', 'cache', 'search'],
+    componentIds: ['database', 'file-storage', 'cache'],
   },
   {
     id: 'auth',
@@ -248,13 +263,13 @@ export const CATEGORY_CONFIGS: CategoryConfig[] = [
     id: 'integration',
     label: 'External Services',
     tooltip: 'Connecting to other services like payments, email, or notifications',
-    componentIds: ['payments', 'email', 'push-notifications', 'analytics'],
+    componentIds: ['payments', 'email', 'search', 'push-notifications', 'analytics'],
   },
   {
-    id: 'infra',
-    label: 'Core Infrastructure',
-    tooltip: 'Your app\'s main parts — the website, the server, background tasks',
-    componentIds: ['frontend', 'api', 'webhooks', 'background-jobs'],
+    id: 'background',
+    label: 'Background Processing',
+    tooltip: 'For tasks that run outside of user requests — queues, scheduled jobs',
+    componentIds: ['webhooks', 'background-jobs'],
   },
 ]
 
@@ -276,4 +291,35 @@ export function getDefaultComponentsForArchetype(archetype: Archetype): Componen
 
 export function getPlatformForArchetype(archetype: Archetype): Platform {
   return getArchetypeConfig(archetype)?.platform ?? 'web'
+}
+
+/**
+ * Check if a component has reached its tech limit
+ */
+export function isAtTechLimit(componentId: string, currentTechCount: number): boolean {
+  const component = getComponentById(componentId)
+  if (!component?.maxTechChoices) return false
+  return currentTechCount >= component.maxTechChoices
+}
+
+/**
+ * Get the tech limit for a component (undefined = unlimited)
+ */
+export function getTechLimit(componentId: string): number | undefined {
+  return getComponentById(componentId)?.maxTechChoices
+}
+
+/**
+ * Find component by its label (case-insensitive)
+ */
+export function getComponentByLabel(label: string): ComponentDefinition | undefined {
+  const normalizedLabel = label.toLowerCase().trim()
+  return ALL_COMPONENTS.find((c) => c.label.toLowerCase() === normalizedLabel)
+}
+
+/**
+ * Get tech limit by component label (undefined = unlimited)
+ */
+export function getTechLimitByLabel(label: string): number | undefined {
+  return getComponentByLabel(label)?.maxTechChoices
 }

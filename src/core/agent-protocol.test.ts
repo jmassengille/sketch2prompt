@@ -117,10 +117,11 @@ describe('generateAgentProtocolTemplate', () => {
     const result = generateAgentProtocolTemplate([], 'Test')
 
     expect(result).toContain('## Code Standards')
-    expect(result).toContain('**Modular**')
-    expect(result).toContain('**Extensible**')
-    expect(result).toContain('**Debuggable**')
-    expect(result).toContain('**Testable**')
+    expect(result).toContain('### General Principles')
+    expect(result).toContain('**Explicit over implicit**')
+    expect(result).toContain('**Composition over inheritance**')
+    expect(result).toContain('**Fail fast**')
+    expect(result).toContain('**Pure functions**')
   })
 
   it('detects TypeScript stack and includes ESLint standards', () => {
@@ -133,7 +134,8 @@ describe('generateAgentProtocolTemplate', () => {
 
     expect(result).toContain('| Stack | Standards |')
     expect(result).toContain('TypeScript')
-    expect(result).toContain('ESLint, strict mode, explicit types')
+    expect(result).toContain('ESLint strict')
+    expect(result).toContain('no `any`')
   })
 
   it('detects Python stack and includes PEP 8 standards', () => {
@@ -146,7 +148,8 @@ describe('generateAgentProtocolTemplate', () => {
 
     expect(result).toContain('| Stack | Standards |')
     expect(result).toContain('Python')
-    expect(result).toContain('PEP 8, type hints, docstrings')
+    expect(result).toContain('PEP 8 strict')
+    expect(result).toContain('snake_case functions/vars')
   })
 
   it('handles nodes with no tech stack gracefully', () => {
@@ -157,12 +160,12 @@ describe('generateAgentProtocolTemplate', () => {
 
     const result = generateAgentProtocolTemplate(nodes, 'Test')
 
-    // Should still have Code Standards section
+    // Should still have Code Standards section with modularity rules and principles
     expect(result).toContain('## Code Standards')
-    expect(result).toContain('General principles:')
-    expect(result).toContain('**Modular**')
-    expect(result).toContain('**Extensible**')
-    // Should not have a tech stack table
+    expect(result).toContain('### Modularity Rules (ENFORCED)')
+    expect(result).toContain('### General Principles')
+    expect(result).toContain('**Explicit over implicit**')
+    // Should not have a tech stack table when no tech stacks defined
     expect(result).not.toContain('| Stack | Standards |')
   })
 })

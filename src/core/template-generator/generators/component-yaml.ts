@@ -6,8 +6,104 @@ import {
   ENHANCED_ANTI_RESPONSIBILITIES,
   TYPE_LABELS,
   TYPE_DESCRIPTIONS,
+  getPackagesForTech,
+  getRegistryUrl,
 } from '../constants'
 import { generateTypeSpecificFields } from '../sections'
+import { detectLanguage } from '../constants/known-packages'
+
+/**
+ * Generate baseline_deps from known packages for the tech stack
+ */
+function generateBaselineDeps(
+  techStack: string[] | undefined
+): Array<{ name: string; version: string; purpose: string }> {
+  if (!techStack || techStack.length === 0) {
+    return [
+      {
+        name: '# AI: Package name',
+        version: '# AI: Semver constraint',
+        purpose: '# AI: Why needed',
+      },
+    ]
+  }
+
+  const language = detectLanguage(techStack)
+  const deps: Array<{ name: string; version: string; purpose: string }> = []
+  const seenPackages = new Set<string>()
+
+  for (const tech of techStack) {
+    const packages = getPackagesForTech(tech, language)
+    for (const pkg of packages) {
+      // Avoid duplicates
+      if (seenPackages.has(pkg.name)) continue
+      seenPackages.add(pkg.name)
+
+      deps.push({
+        name: pkg.name,
+        version: pkg.version,
+        purpose: pkg.purpose,
+      })
+    }
+  }
+
+  // If no packages found, provide placeholder for AI
+  if (deps.length === 0) {
+    return [
+      {
+        name: '# AI: Package name based on tech stack',
+        version: '# AI: Verify latest stable at registry',
+        purpose: '# AI: Why needed',
+      },
+    ]
+  }
+
+  // Add placeholder for additional deps
+  deps.push({
+    name: '# AI: Add project-specific dependencies',
+    version: '# AI: Latest stable',
+    purpose: '# AI: Why needed',
+  })
+
+  return deps
+}
+
+/**
+ * Generate references (docs URLs) from known packages
+ */
+function generateReferences(techStack: string[] | undefined): string[] {
+  if (!techStack || techStack.length === 0) {
+    return ['# AI: Official docs URL']
+  }
+
+  const language = detectLanguage(techStack)
+  const refs: string[] = []
+  const seenUrls = new Set<string>()
+
+  for (const tech of techStack) {
+    const packages = getPackagesForTech(tech, language)
+    for (const pkg of packages) {
+      // Add docs URL
+      if (pkg.docs && !seenUrls.has(pkg.docs)) {
+        seenUrls.add(pkg.docs)
+        refs.push(pkg.docs)
+      }
+
+      // Add registry URL for version verification
+      const registryUrl = getRegistryUrl(pkg)
+      if (!seenUrls.has(registryUrl)) {
+        seenUrls.add(registryUrl)
+        refs.push(`${registryUrl} (version verification)`)
+      }
+    }
+  }
+
+  if (refs.length === 0) {
+    return ['# AI: Official docs URL']
+  }
+
+  return refs
+}
 
 /**
  * Generate component YAML template with enhanced anti-responsibilities
@@ -87,14 +183,8 @@ export function generateComponentYamlTemplate(
         node.data.meta.techStack && node.data.meta.techStack.length > 0
           ? node.data.meta.techStack.join(', ')
           : `# AI: Specify primary technologies (e.g., ${DEFAULT_TECH_STACK[node.data.type]})`,
-      baseline_deps: [
-        {
-          name: '# AI: Package name',
-          version: '# AI: Semver constraint',
-          purpose: '# AI: Why needed',
-        },
-      ],
-      references: ['# AI: Official docs URL'],
+      baseline_deps: generateBaselineDeps(node.data.meta.techStack),
+      references: generateReferences(node.data.meta.techStack),
     },
     validation: {
       exit_criteria: ['# AI: Define based on tech_stack and responsibilities', 'Status file updated with component completion'],

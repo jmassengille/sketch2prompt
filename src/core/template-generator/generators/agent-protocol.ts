@@ -1,4 +1,6 @@
 import type { DiagramNode } from '../../types'
+import type { OutOfScopeId } from '../../onboarding'
+import { OUT_OF_SCOPE_CONFIGS } from '../../onboarding'
 
 /**
  * Detect unique primary tech stacks from all nodes
@@ -22,36 +24,57 @@ function detectPrimaryStacks(nodes: DiagramNode[]): string[] {
 }
 
 /**
- * Tech stack to standards mapping
+ * Tech stack to standards mapping - explicit, enforceable rules
  */
 const STACK_STANDARDS: Record<string, string> = {
-  Python: 'PEP 8, type hints, docstrings',
-  FastAPI: 'PEP 8, type hints, docstrings',
-  Django: 'PEP 8, type hints, docstrings',
-  TypeScript: 'ESLint, strict mode, explicit types',
-  'Node.js': 'ESLint, strict mode, explicit types',
-  Express: 'ESLint, strict mode, explicit types',
-  React: 'ESLint, strict mode, explicit types',
-  'Next.js': 'ESLint, strict mode, explicit types',
-  Go: 'gofmt, effective go',
-  Golang: 'gofmt, effective go',
-  Rust: 'rustfmt, clippy',
-  Java: 'Google Java Style',
-  Spring: 'Google Java Style',
+  Python: 'PEP 8 strict: snake_case functions/vars, PascalCase classes, 4-space indent, max 88 chars/line, type hints required',
+  FastAPI: 'PEP 8 strict: snake_case functions/vars, PascalCase classes, 4-space indent, max 88 chars/line, type hints required',
+  Django: 'PEP 8 strict: snake_case functions/vars, PascalCase classes, 4-space indent, max 88 chars/line, type hints required',
+  TypeScript: 'ESLint strict: no `any`, no enums (use const objects), explicit return types, 2-space indent, max 100 chars/line',
+  'Node.js': 'ESLint strict: no `any`, no enums (use const objects), explicit return types, 2-space indent, max 100 chars/line',
+  Express: 'ESLint strict: no `any`, no enums (use const objects), explicit return types, 2-space indent, max 100 chars/line',
+  React: 'ESLint strict: no `any`, functional components only, explicit prop types, 2-space indent, max 100 chars/line',
+  'Next.js': 'ESLint strict: no `any`, functional components only, explicit prop types, 2-space indent, max 100 chars/line',
+  Vue: 'ESLint strict: no `any`, Composition API preferred, explicit prop types, 2-space indent, max 100 chars/line',
+  SvelteKit: 'ESLint strict: no `any`, explicit types, 2-space indent, max 100 chars/line',
+  Go: 'gofmt mandatory, golint, effective go patterns, explicit error handling, no naked returns',
+  Golang: 'gofmt mandatory, golint, effective go patterns, explicit error handling, no naked returns',
+  Rust: 'rustfmt mandatory, clippy warnings as errors, no unsafe without justification',
+  Java: 'Google Java Style: 2-space indent, 100 char line limit, explicit access modifiers',
+  Spring: 'Google Java Style: 2-space indent, 100 char line limit, explicit access modifiers',
+  PostgreSQL: 'snake_case tables/columns, explicit constraints, indexed foreign keys',
+  MySQL: 'snake_case tables/columns, explicit constraints, indexed foreign keys',
+  MongoDB: 'camelCase fields, schema validation, indexed queries',
+  Redis: 'namespaced keys (prefix:type:id), TTL on all cache entries',
+  Clerk: 'Server-side validation, never trust client claims',
+  Auth0: 'Server-side validation, never trust client claims',
+  Stripe: 'Webhook signature verification, idempotency keys for mutations',
 }
 
 /**
  * Generate code standards section based on detected stacks
  */
 function generateCodeStandardsSection(stacks: string[]): string {
+  // Modularity rules and general principles apply regardless of stack
+  const modularityAndPrinciples = `### Modularity Rules (ENFORCED)
+
+- Functions: **max 50 lines** — split larger functions into helpers
+- Files: **max 300 lines** (hard limit 500) — extract modules when exceeded
+- Classes: single responsibility — one reason to change
+- Nesting: **max 3 levels** — extract early returns or helper functions
+
+### General Principles
+
+- **Explicit over implicit** — no magic, no hidden behavior
+- **Composition over inheritance** — prefer interfaces and composition
+- **Fail fast** — validate inputs early, throw meaningful errors
+- **Pure functions** — minimize side effects, maximize testability
+- **No premature abstraction** — three similar lines beats one clever helper`
+
   if (stacks.length === 0) {
     return `## Code Standards
 
-General principles:
-- **Modular** — single responsibility per file/module
-- **Extensible** — composition over inheritance
-- **Debuggable** — meaningful errors, structured logging
-- **Testable** — injectable dependencies, pure functions where possible`
+${modularityAndPrinciples}`
   }
 
   let tableRows = ''
@@ -74,11 +97,35 @@ Apply dynamically based on \`tech_stack.primary\`:
 | Stack | Standards |
 |-------|-----------|
 ${tableRows}
-General principles:
-- **Modular** — single responsibility per file/module
-- **Extensible** — composition over inheritance
-- **Debuggable** — meaningful errors, structured logging
-- **Testable** — injectable dependencies, pure functions where possible`
+${modularityAndPrinciples}`
+}
+
+/**
+ * Generate exclusions section based on out-of-scope items
+ */
+function generateExclusionsSection(outOfScope: OutOfScopeId[]): string {
+  if (outOfScope.length === 0) {
+    return ''
+  }
+
+  const items = outOfScope
+    .map((id) => {
+      const config = OUT_OF_SCOPE_CONFIGS.find((c) => c.id === id)
+      if (!config) return null
+      return `- **${config.label}**: ${config.rationale}`
+    })
+    .filter(Boolean)
+    .join('\n')
+
+  return `## Explicitly Out of Scope
+
+The following are **intentionally excluded** from this project's scope. Do not implement, suggest, or plan for these features unless explicitly requested by the user.
+
+${items}
+
+---
+
+`
 }
 
 /**
@@ -88,9 +135,11 @@ General principles:
 export function generateAgentProtocolTemplate(
   nodes: DiagramNode[],
   _projectName: string,
+  outOfScope: OutOfScopeId[] = [],
 ): string {
   const stacks = detectPrimaryStacks(nodes)
   const codeStandards = generateCodeStandardsSection(stacks)
+  const exclusions = generateExclusionsSection(outOfScope)
 
   return `# Agent Protocol
 
@@ -105,7 +154,7 @@ Before ANY implementation:
 
 ---
 
-## Status Tracking (MANDATORY)
+${exclusions}## Status Tracking (MANDATORY)
 
 \`STATUS.md\` tracks current phase, milestone, and progress.
 

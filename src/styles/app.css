@@ -3,148 +3,186 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==============================================
+   DESIGN SYSTEM - sketch2prompt
+   "The Workshop" - A developer's planning space
+
+   Inspired by: drafting tables, building blocks, sandbox play
+   Palette derived from logo: purple towers, cyan blocks,
+   yellow/pink cubes, warm sand
+   ============================================== */
+
 @theme {
   /* ==============================================
-     DESIGN SYSTEM - sketch2prompt
-     Technical precision aesthetic: clean, crisp, professional
-     Base unit: 4px
+     CORE PALETTE - Derived from sandbox logo
      ============================================== */
 
-  /* Core Colors - Light Mode */
-  --color-bg: #ffffff;
-  --color-bg-secondary: #f8fafc;
-  --color-bg-tertiary: #f1f5f9;
-  --color-text: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
-  --color-text-subtle: #94a3b8;
-  --color-border: #e2e8f0;
-  --color-border-subtle: #f1f5f9;
-  --color-border-focus: #3b82f6;
+  /* Building Block Colors (from logo) - refined for clarity */
+  --color-block-purple: #7C3AED;      /* Tall tower - distinctive violet */
+  --color-block-cyan: #0D9488;        /* Middle block - teal (primary accent) */
+  --color-block-yellow: #D97706;      /* Small cube - amber highlights */
+  --color-block-pink: #DB2777;        /* Small cube - magenta selection */
+  --color-block-blue: #2563EB;        /* Sandbox rim - structural blue */
+  --color-sand: #92400E;              /* Sand base - warm brown */
+  --color-sun: #F59E0B;               /* Sun - warmth accent */
 
-  /* Primary Brand */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
+  /* Core Colors - Light Mode (warm paper-like) */
+  --color-bg: #FDFBF7;
+  --color-bg-secondary: #F8F6F1;
+  --color-bg-tertiary: #F1EDE6;
+  --color-text: #1E1B18;
+  --color-text-secondary: #44403C;
+  --color-text-muted: #78716C;
+  --color-text-subtle: #A8A29E;
+  --color-border: #E7E5E4;
+  --color-border-subtle: #F5F5F4;
+  --color-border-focus: var(--color-block-purple);
+
+  /* Primary Brand - Purple (from tall tower block) */
+  --color-primary: var(--color-block-purple);
+  --color-primary-hover: #7C3AED;
   --color-primary-text: #ffffff;
-  --color-primary-subtle: rgba(59, 130, 246, 0.1);
+  --color-primary-subtle: rgba(139, 92, 246, 0.1);
 
-  /* Node Type Colors */
-  --color-node-agent: #3b82f6;
-  --color-node-tool: #10b981;
-  --color-node-data: #8b5cf6;
-  --color-node-system: #6b7280;
-  --color-node-note: #f59e0b;
+  /* Node Type Colors - Building block inspired */
+  --color-node-frontend: var(--color-block-purple);
+  --color-node-backend: var(--color-block-blue);
+  --color-node-storage: var(--color-block-cyan);
+  --color-node-auth: var(--color-block-pink);
+  --color-node-external: var(--color-block-yellow);
+  --color-node-background: #78716C;
 
   /* Semantic Colors */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #0ea5e9;
+  --color-success: #16A34A;
+  --color-warning: var(--color-block-yellow);
+  --color-error: #DC2626;
+  --color-info: var(--color-block-blue);
 
-  /* Typography */
-  --font-family-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  /* Typography - Distinctive and refined */
+  --font-family-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-family-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-family-mono: "Geist Mono", ui-monospace, monospace;
 
-  /* Font Sizes - More readable minimum */
-  --text-xs: 0.6875rem;   /* 11px - minimum readable */
+  /* Font Sizes */
+  --text-xs: 0.6875rem;   /* 11px */
   --text-sm: 0.8125rem;   /* 13px */
   --text-base: 0.875rem;  /* 14px */
   --text-lg: 1rem;        /* 16px */
+  --text-xl: 1.125rem;    /* 18px */
+  --text-2xl: 1.5rem;     /* 24px */
 
-  /* Border Radius */
+  /* Border Radius - Slightly rounded, not harsh */
   --radius-sm: 0.25rem;   /* 4px */
   --radius-md: 0.375rem;  /* 6px */
   --radius-lg: 0.5rem;    /* 8px */
   --radius-xl: 0.75rem;   /* 12px */
 
-  /* Shadows - Light Mode */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  /* Shadows - Dramatic depth with subtle glow */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.25), 0 12px 24px rgba(0, 0, 0, 0.15);
 
-  /* Blueprint accent colors (from OnboardingWizard) */
-  --color-blueprint-accent: #00d4ff;
-  --color-blueprint-accent-dim: rgba(0, 212, 255, 0.3);
-  --color-blueprint-accent-subtle: rgba(0, 212, 255, 0.1);
+  /* Glow shadows for accent elements */
+  --shadow-glow-teal: 0 0 20px rgba(20, 184, 166, 0.3), 0 0 40px rgba(20, 184, 166, 0.15);
+  --shadow-glow-subtle: 0 0 12px rgba(20, 184, 166, 0.2);
 
-  /* Blueprint backgrounds */
-  --color-blueprint-bg: #0a0f1a;
-  --color-blueprint-card: rgba(15, 23, 42, 0.8);
+  /* Workshop/Wizard Mode - Refined dark with subtle warmth */
+  --color-workshop-bg: #09090B;
+  --color-workshop-surface: #131316;
+  --color-workshop-elevated: #1C1C21;
+  --color-workshop-border: #27272A;
+  --color-workshop-border-accent: #3F3F46;
+  --color-workshop-text: #FAFAFA;
+  --color-workshop-text-muted: #A1A1AA;
+  --color-workshop-text-subtle: #71717A;
 
-  /* Blueprint effects */
-  --shadow-glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
-  --shadow-glow-sm-cyan: 0 0 12px rgba(0, 212, 255, 0.3);
+  /* Accent for wizard - refined teal with more depth */
+  --color-wizard-accent: #14B8A6;
+  --color-wizard-accent-dim: rgba(20, 184, 166, 0.35);
+  --color-wizard-accent-subtle: rgba(20, 184, 166, 0.12);
+  --color-wizard-accent-glow: rgba(20, 184, 166, 0.4);
 
-  /* Canvas & Surface System - More distinct elevations */
-  --color-canvas-bg: #f8fafc;
+  /* Secondary accent - warm amber for highlights */
+  --color-accent-warm: #F59E0B;
+  --color-accent-warm-subtle: rgba(245, 158, 11, 0.15);
+
+  /* Canvas & Surface System */
+  --color-canvas-bg: #FDFBF7;
   --color-surface-0: #ffffff;
-  --color-surface-1: #f8fafc;
-  --color-surface-2: #f1f5f9;
-  --color-surface-hover: #f1f5f9;
+  --color-surface-1: #FDFBF7;
+  --color-surface-2: #F8F6F1;
+  --color-surface-hover: #F5F3EE;
 
-  /* Blueprint Grid (subtle) */
-  --color-grid-line: rgba(15, 23, 42, 0.04);
-  --color-grid-line-major: rgba(15, 23, 42, 0.08);
+  /* Grid (subtle graph paper feel) */
+  --color-grid-line: rgba(28, 25, 23, 0.04);
+  --color-grid-line-major: rgba(28, 25, 23, 0.08);
 
-  /* Card Shadows - Light mode - Enhanced for better depth */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
-  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --shadow-card-selected: 0 0 0 2px var(--color-primary), 0 4px 12px rgba(59, 130, 246, 0.15);
-  --shadow-card-dragging: 0 16px 32px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+  /* Card Shadows - Refined for dark theme */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-card-selected: 0 0 0 2px var(--color-wizard-accent), 0 8px 24px rgba(20, 184, 166, 0.2);
+  --shadow-card-dragging: 0 24px 48px rgba(0, 0, 0, 0.4), 0 12px 24px rgba(0, 0, 0, 0.25);
 
   /* Interactive States */
   --transition-fast: 100ms ease-out;
   --transition-base: 150ms ease-out;
-  --transition-slow: 200ms ease-out;
+  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* LEGACY MAPPINGS - for gradual migration */
+  --color-blueprint-accent: var(--color-wizard-accent);
+  --color-blueprint-accent-dim: var(--color-wizard-accent-dim);
+  --color-blueprint-accent-subtle: var(--color-wizard-accent-subtle);
+  --color-blueprint-bg: var(--color-workshop-bg);
+  --color-blueprint-card: var(--color-workshop-surface);
 }
 
 /* ==============================================
-   DARK MODE - Higher contrast, better readability
+   DARK MODE - Warm dark, not cold blue
    ============================================== */
 .dark {
-  /* Core Colors - Dark Mode with better contrast */
-  --color-bg: #0c111b;
-  --color-bg-secondary: #131927;
-  --color-bg-tertiary: #1a2235;
-  --color-text: #f8fafc;
-  --color-text-secondary: #e2e8f0;
-  --color-text-muted: #94a3b8;
-  --color-text-subtle: #64748b;
-  --color-border: #1e293b;
-  --color-border-subtle: #1a2235;
-  --color-border-focus: #60a5fa;
+  /* Core Colors - Warm dark with stone undertones */
+  --color-bg: #1C1917;
+  --color-bg-secondary: #292524;
+  --color-bg-tertiary: #3D3835;
+  --color-text: #FAFAF9;
+  --color-text-secondary: #E7E5E4;
+  --color-text-muted: #A8A29E;
+  --color-text-subtle: #78716C;
+  --color-border: #44403C;
+  --color-border-subtle: #3D3835;
+  --color-border-focus: #A78BFA;
 
-  /* Primary Brand - Dark */
-  --color-primary: #60a5fa;
-  --color-primary-hover: #3b82f6;
-  --color-primary-subtle: rgba(96, 165, 250, 0.15);
+  /* Primary Brand - Brighter purple for dark */
+  --color-primary: #A78BFA;
+  --color-primary-hover: #8B5CF6;
+  --color-primary-subtle: rgba(167, 139, 250, 0.15);
 
   /* Node Type Colors - Brighter for dark mode */
-  --color-node-agent: #60a5fa;
-  --color-node-tool: #34d399;
-  --color-node-data: #a78bfa;
-  --color-node-system: #9ca3af;
-  --color-node-note: #fbbf24;
+  --color-node-frontend: #A78BFA;
+  --color-node-backend: #60A5FA;
+  --color-node-storage: #2DD4BF;
+  --color-node-auth: #F472B6;
+  --color-node-external: #FBBF24;
+  --color-node-background: #A8A29E;
 
-  /* Canvas & Surface - Dark - Clear elevation steps */
-  --color-canvas-bg: #0a0e17;
-  --color-surface-0: #0f1520;
-  --color-surface-1: #151c2c;
-  --color-surface-2: #1e2740;
-  --color-surface-hover: #1e2740;
+  /* Canvas & Surface - Warm dark elevations */
+  --color-canvas-bg: #1C1917;
+  --color-surface-0: #1C1917;
+  --color-surface-1: #292524;
+  --color-surface-2: #3D3835;
+  --color-surface-hover: #44403C;
 
-  /* Blueprint Grid - Dark */
-  --color-grid-line: rgba(34, 211, 238, 0.03);
-  --color-grid-line-major: rgba(34, 211, 238, 0.06);
+  /* Grid - Subtle warm lines */
+  --color-grid-line: rgba(168, 162, 158, 0.06);
+  --color-grid-line-major: rgba(168, 162, 158, 0.12);
 
-  /* Card Shadows - Dark mode - Enhanced glow effect */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.5), 0 16px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --shadow-card-selected: 0 0 0 2px var(--color-primary), 0 0 24px rgba(96, 165, 250, 0.25), 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-card-dragging: 0 16px 32px rgba(0, 0, 0, 0.6), 0 32px 64px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-
-  /* Note: ShadCN variables for dark mode are defined in :root.dark at end of file */
+  /* Card Shadows - Deeper for dark, subtle inner highlight */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-card-selected: 0 0 0 2px var(--color-primary), 0 4px 16px rgba(139, 92, 246, 0.25);
+  --shadow-card-dragging: 0 20px 40px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 html {
@@ -243,6 +281,60 @@ body {
   50% {
     box-shadow: 0 0 16px var(--color-blueprint-accent);
   }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation-name: scale-in;
+}
+
+@keyframes glow-breathe {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(20, 184, 166, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(20, 184, 166, 0.35), 0 0 24px rgba(20, 184, 166, 0.15);
+  }
+}
+
+/* Animation delay utilities */
+.delay-50 { animation-delay: 50ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-250 { animation-delay: 250ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+.duration-500 {
+  animation-duration: 500ms;
+}
+
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Corner bracket decorations (blueprint aesthetic) */
@@ -507,4 +599,81 @@ body {
 
 .dark .chip-hover:hover {
   filter: brightness(1.1);
+}
+
+/* ==============================================
+   ENHANCED UTILITY CLASSES - Architect's Workshop
+   ============================================== */
+
+/* Glow effects */
+.glow-teal {
+  box-shadow: var(--shadow-glow-teal);
+}
+
+.glow-subtle {
+  box-shadow: var(--shadow-glow-subtle);
+}
+
+/* Gradient text */
+.text-gradient-teal {
+  background: linear-gradient(135deg, #14B8A6 0%, #06B6D4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(19, 19, 22, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Animated border */
+.border-animated {
+  position: relative;
+}
+
+.border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--color-wizard-accent), transparent);
+  background-size: 200% 100%;
+  animation: border-flow 3s ease infinite;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.border-animated:hover::before {
+  opacity: 0.5;
+}
+
+/* Scale on hover */
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Focus ring with glow */
+.focus-glow:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-wizard-accent), var(--shadow-glow-subtle);
+}
+
+/* Elevated surface */
+.surface-elevated {
+  background: var(--color-workshop-elevated);
+  border: 1px solid var(--color-workshop-border);
+  box-shadow: var(--shadow-card);
+}
+
+.surface-elevated:hover {
+  border-color: var(--color-workshop-border-accent);
+  box-shadow: var(--shadow-card-hover);
 }

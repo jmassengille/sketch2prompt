@@ -6,6 +6,7 @@
 import JSZip from 'jszip'
 import { exportJson } from './export-json'
 import type { DiagramNode, DiagramEdge } from './types'
+import type { OutOfScopeId } from './onboarding'
 
 // These will be imported once created by subagents
 // import { generateWithAI, type AIProvider } from './ai-generator'
@@ -19,6 +20,7 @@ export interface ExportOptions {
   apiKey?: string
   apiProvider?: AIProvider
   modelId?: string
+  outOfScope?: OutOfScopeId[]
 }
 
 export interface ExportSuccess {
@@ -101,7 +103,7 @@ export async function exportBlueprint(
         './template-generator'
       )
       projectRules = generateProjectRulesTemplate(nodes, edges, options.projectName)
-      agentProtocol = generateAgentProtocolTemplate(nodes, options.projectName)
+      agentProtocol = generateAgentProtocolTemplate(nodes, options.projectName, options.outOfScope ?? [])
       for (const node of nodes) {
         const yaml = generateComponentYamlTemplate(node, edges, nodes)
         componentSpecs.set(node.id, yaml)

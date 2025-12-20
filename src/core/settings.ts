@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { OutOfScopeId } from './onboarding'
 
 export type AIProvider = 'anthropic' | 'openai'
 
@@ -15,12 +16,14 @@ export interface SettingsStore {
   apiKey: string
   modelId: string
   projectName: string
+  outOfScope: OutOfScopeId[]
 
   // Actions
   setApiProvider: (provider: AIProvider) => void
   setApiKey: (key: string) => void
   setModelId: (id: string) => void
   setProjectName: (name: string) => void
+  setOutOfScope: (items: OutOfScopeId[]) => void
   clearApiKey: () => void
   hasApiKey: () => boolean
 }
@@ -30,6 +33,7 @@ const initialState = {
   apiKey: '',
   modelId: DEFAULT_MODELS.anthropic,
   projectName: '',
+  outOfScope: [] as OutOfScopeId[],
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -56,6 +60,10 @@ export const useSettingsStore = create<SettingsStore>()(
         set({ projectName: name })
       },
 
+      setOutOfScope: (items) => {
+        set({ outOfScope: items })
+      },
+
       clearApiKey: () => {
         set({ apiKey: '' })
       },
@@ -71,6 +79,7 @@ export const useSettingsStore = create<SettingsStore>()(
         apiKey: state.apiKey,
         modelId: state.modelId,
         projectName: state.projectName,
+        outOfScope: state.outOfScope,
       }),
     }
   )

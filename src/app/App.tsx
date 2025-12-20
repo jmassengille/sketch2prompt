@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useShallow } from 'zustand/react/shallow'
-import { FileOutput, Undo2, Redo2, Sun, Moon, Play, Search } from 'lucide-react'
+import { FileOutput, Undo2, Redo2, Play, Search } from 'lucide-react'
 import { Canvas } from '../components/Canvas'
 import { Inspector } from '../components/Inspector'
 import { ExportDrawer } from '../components/ExportDrawer'
 import { ErrorBoundary } from '../components/ErrorBoundary'
-import { OnboardingWizard } from '../components/OnboardingWizard'
+import { OnboardingWizardV2 } from '../components/onboarding'
+import { FirstLaunchOverlay } from '../components/FirstLaunchOverlay'
 import { CommandPalette } from '../components/CommandPalette'
 import { QuickAddMenu } from '../components/QuickAddMenu'
 import { useTemporalStore, useStore } from '../core/store'
 import { useSettingsStore } from '../core/settings'
+import { autoGenerateEdges } from '../core/auto-edges'
 import { useUIStore } from '../core/ui-store'
 import { useKeyboardShortcuts, SHORTCUT_KEYS } from '../hooks/useKeyboardShortcuts'
 import type { DiagramNode, NodeType } from '../core/types'
@@ -28,8 +30,11 @@ export function App() {
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
       : false
   )
+  const [showFirstLaunch, setShowFirstLaunch] = useState(false)
+  const [firstLaunchData, setFirstLaunchData] = useState<{ projectName: string; componentCount: number } | null>(null)
 
   const setNodes = useStore((state) => state.setNodes)
+  const setEdges = useStore((state) => state.setEdges)
   const addNode = useStore((state) => state.addNode)
   const nodes = useStore((state) => state.nodes)
   const selectedNode = useStore((state) => state.nodes.find((n) => n.selected))
@@ -93,12 +98,23 @@ export function App() {
   const handleOnboardingComplete = useCallback(
     (generatedNodes: DiagramNode[], title: string) => {
       setNodes(generatedNodes)
+      // Auto-generate edges based on component types
+      const edges = autoGenerateEdges(generatedNodes)
+      setEdges(edges)
       setProjectName(title)
       localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true')
       setShowOnboarding(false)
+      // Show first launch overlay with context
+      setFirstLaunchData({ projectName: title, componentCount: generatedNodes.length })
+      setShowFirstLaunch(true)
     },
-    [setNodes, setProjectName]
+    [setNodes, setEdges, setProjectName]
   )
+
+  const handleDismissFirstLaunch = useCallback(() => {
+    setShowFirstLaunch(false)
+    setFirstLaunchData(null)
+  }, [])
 
   const handleSkipOnboarding = useCallback(() => {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true')
@@ -196,28 +212,56 @@ export function App() {
 
   return (
     <div className="flex h-screen flex-col bg-bg">
-      <header className="flex h-14 items-center justify-between border-b border-slate-200/80 dark:border-slate-800 px-5 bg-white dark:bg-slate-900/50">
-        <div className="flex items-center gap-5">
-          <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100 tracking-tight">sketch2prompt</h1>
+      <header className="relative flex h-14 items-center justify-between border-b border-[var(--color-workshop-border)] px-5 bg-[var(--color-workshop-surface)]/95 backdrop-blur-md">
+        {/* Subtle top highlight line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-wizard-accent)]/20 to-transparent" />
 
+        <div className="flex items-center gap-6">
+          {/* Logo + Title */}
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <img src="/no_text_logo.png" alt="sketch2prompt" className="h-9 w-auto transition-transform duration-300 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-[var(--color-wizard-accent)]/0 group-hover:bg-[var(--color-wizard-accent)]/5 rounded-lg transition-colors duration-300" />
+            </div>
+            <div className="hidden sm:block">
+              <h1
+                className="text-base font-semibold tracking-tight"
+                style={{
+                  fontFamily: 'var(--font-family-display)',
+                  background: 'linear-gradient(to right, var(--color-workshop-text), var(--color-workshop-text-muted))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                sketch2prompt
+              </h1>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden md:block h-6 w-px bg-[var(--color-workshop-border)]" />
+
+          {/* Search */}
           <button
             onClick={() => { openCommandPalette() }}
             title="Search commands (Ctrl+K)"
-            className="flex items-center gap-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 text-[13px] text-slate-500 dark:text-slate-400 transition-all duration-150 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            className="flex items-center gap-3 rounded-lg border border-[var(--color-workshop-border)] bg-[var(--color-workshop-bg)]/60 px-3.5 py-2 text-[13px] text-[var(--color-workshop-text-muted)] transition-all duration-200 hover:border-[var(--color-workshop-border-accent)] hover:bg-[var(--color-workshop-elevated)] hover:text-[var(--color-workshop-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-wizard-accent)]/50 cursor-pointer group"
           >
-            <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">Search...</span>
-            <kbd className="hidden rounded-md bg-white dark:bg-slate-900 px-2 py-0.5 font-mono text-[10px] text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 sm:inline-block">
-              Ctrl+K
+            <Search className="h-4 w-4 transition-colors group-hover:text-[var(--color-wizard-accent)]" />
+            <span className="hidden sm:inline">Search commands...</span>
+            <kbd className="hidden rounded bg-[var(--color-workshop-elevated)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-workshop-text-subtle)] border border-[var(--color-workshop-border)] sm:inline-block">
+              ⌘K
             </kbd>
           </button>
 
-          <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 pl-4">
+          {/* Undo/Redo */}
+          <div className="flex items-center gap-0.5 border-l border-[var(--color-workshop-border)] pl-4">
             <button
               onClick={() => { undo() }}
               disabled={!canUndo}
               title="Undo (Ctrl+Z)"
-              className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition-all duration-150 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
+              className="rounded-md p-2 text-[var(--color-workshop-text-muted)] transition-all duration-150 hover:bg-[var(--color-workshop-elevated)] hover:text-[var(--color-workshop-text)] disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-wizard-accent)]/50 cursor-pointer"
             >
               <Undo2 className="h-4 w-4" />
             </button>
@@ -225,37 +269,35 @@ export function App() {
               onClick={() => { redo() }}
               disabled={!canRedo}
               title="Redo (Ctrl+Shift+Z)"
-              className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition-all duration-150 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 cursor-pointer"
+              className="rounded-md p-2 text-[var(--color-workshop-text-muted)] transition-all duration-150 hover:bg-[var(--color-workshop-elevated)] hover:text-[var(--color-workshop-text)] disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-wizard-accent)]/50 cursor-pointer"
             >
               <Redo2 className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Quick Start button (only when empty) */}
           {nodesCount === 0 && (
             <button
               onClick={handleShowOnboarding}
               title="Start with guided setup"
-              className="flex items-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3.5 py-2 text-[13px] font-medium text-cyan-600 dark:text-cyan-400 transition-all duration-150 hover:bg-cyan-500/20 hover:border-cyan-500/60 cursor-pointer"
+              className="flex items-center gap-2 rounded-lg border border-[var(--color-wizard-accent)]/30 bg-[var(--color-wizard-accent)]/10 px-3.5 py-2 text-[13px] font-medium text-[var(--color-wizard-accent)] transition-all duration-200 hover:bg-[var(--color-wizard-accent)]/20 hover:border-[var(--color-wizard-accent)]/50 hover:shadow-[var(--shadow-glow-subtle)] cursor-pointer"
             >
               <Play className="h-4 w-4" />
-              Quick Start
+              <span className="hidden sm:inline">Quick Start</span>
             </button>
           )}
-          <button
-            onClick={handleToggleTheme}
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition-all duration-150 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+
+
+          {/* Generate button - primary CTA */}
           <button
             onClick={handleOpenExport}
-            className="flex items-center gap-2 rounded-lg bg-blue-500 dark:bg-blue-600 px-4 py-2 text-[13px] font-medium text-white transition-all duration-150 hover:bg-blue-600 dark:hover:bg-blue-500 active:scale-[0.97] cursor-pointer shadow-sm"
+            title="Generate blueprint files for AI assistants"
+            className="flex items-center gap-2 rounded-lg bg-[var(--color-wizard-accent)] px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:bg-[var(--color-wizard-accent)]/90 hover:shadow-[var(--shadow-glow-subtle)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--color-wizard-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-workshop-bg)] cursor-pointer shadow-md"
           >
             <FileOutput className="h-4 w-4" />
-            Export
+            <span className="hidden sm:inline">Generate</span>
           </button>
         </div>
       </header>
@@ -270,8 +312,8 @@ export function App() {
             <aside
               className={`
                 absolute right-0 top-0 h-full w-80
-                border-l border-slate-200/80 dark:border-slate-800
-                bg-white dark:bg-slate-900/80
+                border-l border-[var(--color-workshop-border)]
+                bg-[var(--color-workshop-surface)]
                 shadow-lg
                 transition-transform duration-200 ease-out
                 ${hasSelection ? 'translate-x-0' : 'translate-x-full'}
@@ -298,9 +340,17 @@ export function App() {
       <QuickAddMenu />
 
       {showOnboarding && (
-        <OnboardingWizard
+        <OnboardingWizardV2
           onComplete={handleOnboardingComplete}
           onSkip={handleSkipOnboarding}
+        />
+      )}
+
+      {showFirstLaunch && firstLaunchData && (
+        <FirstLaunchOverlay
+          projectName={firstLaunchData.projectName}
+          componentCount={firstLaunchData.componentCount}
+          onDismiss={handleDismissFirstLaunch}
         />
       )}
     </div>

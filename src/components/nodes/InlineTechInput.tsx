@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, AlertTriangle } from 'lucide-react'
 import type { NodeType } from '../../core/types'
 import { getTechSuggestions } from '../../core/tech-suggestions'
 import { TechChip } from './TechChip'
@@ -10,6 +10,8 @@ interface InlineTechInputProps {
   onAdd: (tech: string) => void
   onRemove: (tech: string) => void
   maxVisible?: number
+  /** Optional limit on number of tech choices. Shows soft warning when exceeded. */
+  techLimit?: number | undefined
 }
 
 export function InlineTechInput({
@@ -18,6 +20,7 @@ export function InlineTechInput({
   onAdd,
   onRemove,
   maxVisible = 4,
+  techLimit,
 }: InlineTechInputProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [query, setQuery] = useState('')
@@ -28,6 +31,9 @@ export function InlineTechInput({
   const suggestions = getTechSuggestions(nodeType, query, techStack)
   const visibleTech = techStack.slice(0, maxVisible)
   const overflowCount = techStack.length - maxVisible
+
+  // Check if over the recommended limit
+  const isOverLimit = techLimit !== undefined && techStack.length > techLimit
 
   // Focus input when editing starts
   useEffect(() => {
@@ -155,6 +161,16 @@ export function InlineTechInput({
           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono pl-1">
             +{overflowCount} more
           </span>
+        )}
+
+        {/* Soft warning when over recommended limit */}
+        {isOverLimit && (
+          <div className="flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <span className="text-[10px] text-amber-700 dark:text-amber-300 leading-relaxed">
+              Most projects use just {techLimit} here. Multiple choices can add complexity.
+            </span>
+          </div>
         )}
 
         {isEditing ? (

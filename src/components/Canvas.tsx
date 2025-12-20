@@ -19,7 +19,12 @@ import { useStore } from '../core/store'
 import { nodeTypes } from './nodes'
 import { QuickAddFAB } from './QuickAddFAB'
 import { EmptyCanvasState } from './EmptyCanvasState'
-import type { DiagramNode, DiagramEdge, NodeType } from '../core/types'
+import type {
+  DiagramNode,
+  DiagramNodeData,
+  DiagramEdge,
+  NodeType,
+} from '../core/types'
 
 const NODE_TYPES_CYCLE: NodeType[] = [
   'frontend',
@@ -128,26 +133,28 @@ function CanvasInner({ colorMode }: CanvasInnerProps) {
       >
         <Background
           variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
+          gap={24}
+          size={1.5}
           color="var(--color-grid-line)"
-          className="!bg-canvas-bg"
+          className="!bg-[var(--color-workshop-bg)]"
         />
         <Controls
           position="bottom-left"
           className="
-            !bg-white dark:!bg-slate-900
-            !border !border-slate-200 dark:!border-slate-700
-            !rounded-lg !shadow-md
+            !bg-[var(--color-workshop-surface)]
+            !border !border-[var(--color-workshop-border)]
+            !rounded-lg !shadow-lg
             !left-4 !bottom-4
             !overflow-hidden
-            [&>button]:!bg-white dark:[&>button]:!bg-slate-900
-            [&>button]:!border-0 [&>button]:!border-b [&>button]:!border-slate-200 dark:[&>button]:!border-slate-700
+            [&>button]:!bg-[var(--color-workshop-surface)]
+            [&>button]:!border-0 [&>button]:!border-b [&>button]:!border-[var(--color-workshop-border)]
             [&>button]:!rounded-none
             [&>button:last-child]:!border-b-0
-            [&>button]:!text-slate-600 dark:[&>button]:!text-slate-300
-            [&>button:hover]:!bg-slate-100 dark:[&>button:hover]:!bg-slate-800
-            [&>button]:!transition-colors [&>button]:!duration-150
+            [&>button]:!text-[var(--color-workshop-text-muted)]
+            [&>button:hover]:!bg-[var(--color-workshop-elevated)]
+            [&>button:hover]:!text-[var(--color-workshop-text)]
+            [&>button]:!transition-all [&>button]:!duration-150
+            [&>button>svg]:!fill-current
           "
         />
         <MiniMap
@@ -156,13 +163,26 @@ function CanvasInner({ colorMode }: CanvasInnerProps) {
           nodeStrokeWidth={3}
           position="bottom-right"
           className="
-            !bg-white/90 dark:!bg-slate-900/90
-            !border !border-slate-200 dark:!border-slate-700
-            !rounded-xl !shadow-md
+            !bg-[var(--color-workshop-surface)]/95
+            !border !border-[var(--color-workshop-border)]
+            !rounded-xl !shadow-lg
             !right-4 !bottom-4
             backdrop-blur-sm
           "
-          maskColor="rgba(0, 0, 0, 0.08)"
+          maskColor="rgba(9, 9, 11, 0.6)"
+          nodeColor={(node) => {
+            const colors: Record<string, string> = {
+              frontend: '#A78BFA',
+              backend: '#60A5FA',
+              storage: '#2DD4BF',
+              auth: '#F472B6',
+              external: '#FBBF24',
+              background: '#A8A29E',
+            }
+            const nodeData = node.data as DiagramNodeData | undefined
+            const nodeType = nodeData?.type
+            return (nodeType && colors[nodeType]) ?? '#A8A29E'
+          }}
         />
       </ReactFlow>
       {isEmpty && <EmptyCanvasState />}
@@ -177,7 +197,7 @@ interface CanvasProps {
 
 export function Canvas({ colorMode = 'light' }: CanvasProps) {
   return (
-    <div className="h-full w-full bg-canvas-bg">
+    <div className="h-full w-full bg-[var(--color-workshop-bg)]">
       <CanvasInner colorMode={colorMode} />
     </div>
   )

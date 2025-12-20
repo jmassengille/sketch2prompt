@@ -207,10 +207,15 @@ ${componentRegistry}
    - "PREFER (Encouraged)" subsection with 2-4 preferred patterns (format: "X over Y — rationale")
 
 4. **Code Standards** - Include:
-   - "Naming Conventions" subsection (files, components, functions, constants, types)
-   - "File Organization" subsection (brief folder structure)
-   - "Patterns" subsection with 1-2 key patterns with code examples
-   - "Dependencies Policy" subsection (prefer, avoid, before-adding checklist)
+   - "Naming Conventions (ENFORCED)" subsection with stack-specific rules:
+     * TypeScript: kebab-case.ts for utils, PascalCase.tsx for components, camelCase functions, SCREAMING_SNAKE_CASE constants
+     * Python: snake_case.py files, snake_case functions/vars, PascalCase classes
+   - "Modularity Rules (HARD LIMITS)" table: functions max 50 lines, files max 300 lines (hard limit 500), nesting max 3 levels, parameters max 4
+   - "File Organization" subsection with specific folder structure
+   - "Required Patterns" subsection with stack-specific requirements:
+     * TypeScript: strict mode, no \`any\`, no enums, explicit return types
+     * Python: type hints required, docstrings on public functions, zero warnings policy
+   - "Dependencies Policy" subsection (search before adding, verify maintenance, check bundle size, NEVER install from GitHub main)
 
 5. **Build Order** - Include:
    - Implementation sequence grouped by phases
@@ -388,14 +393,18 @@ REQUIRED SECTIONS (in order):
    - When custom code is acceptable
 
 6. **Code Standards** - Include:
-   - Dynamic table based on detected stacks
-   - For each stack: standards reference (e.g., PEP 8, ESLint)
-   - General principles: modular, extensible, debuggable, testable
+   - Dynamic table based on detected stacks with EXPLICIT rules:
+     * Python: "PEP 8 strict: snake_case functions/vars, PascalCase classes, 4-space indent, max 88 chars/line, type hints required"
+     * TypeScript: "ESLint strict: no \`any\`, no enums (use const objects), explicit return types, 2-space indent"
+     * Go: "gofmt mandatory, golint, explicit error handling, no naked returns"
+   - Modularity Rules (HARD LIMITS): functions max 50 lines, files max 300 lines (hard limit 500), nesting max 3 levels
+   - General principles: explicit over implicit, composition over inheritance, fail fast, pure functions, no premature abstraction
 
 IMPORTANT INSTRUCTIONS:
 - Be professional and actionable
 - Keep guidance generic enough to work across IDEs
 - Emphasize status tracking throughout
+- Include SPECIFIC, ENFORCEABLE rules - not just "PEP 8" but the actual rules
 - Output markdown ONLY - no code fences, just the content
 - Start directly with: # Agent Protocol`
 }

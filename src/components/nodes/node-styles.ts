@@ -20,6 +20,7 @@ export const NODE_COLORS: Record<NodeType, {
   gradientTo: string
   glow: string
   glowIntense: string
+  glowColor?: string
   // Chip colors for inline tech
   chipBg: string
   chipText: string
@@ -39,6 +40,7 @@ export const NODE_COLORS: Record<NodeType, {
     gradientTo: 'to-blue-600',
     glow: 'shadow-[0_0_12px_rgba(59,130,246,0.12)]',
     glowIntense: 'shadow-[0_0_24px_rgba(59,130,246,0.25)]',
+    glowColor: 'rgba(59, 130, 246, 0.3)',
     chipBg: 'bg-blue-100 dark:bg-blue-900/50',
     chipText: 'text-blue-700 dark:text-blue-300',
     chipBorder: 'border-blue-200 dark:border-blue-700/60',
@@ -57,6 +59,7 @@ export const NODE_COLORS: Record<NodeType, {
     gradientTo: 'to-emerald-600',
     glow: 'shadow-[0_0_12px_rgba(16,185,129,0.12)]',
     glowIntense: 'shadow-[0_0_24px_rgba(16,185,129,0.25)]',
+    glowColor: 'rgba(16, 185, 129, 0.3)',
     chipBg: 'bg-emerald-100 dark:bg-emerald-900/50',
     chipText: 'text-emerald-700 dark:text-emerald-300',
     chipBorder: 'border-emerald-200 dark:border-emerald-700/60',
@@ -75,6 +78,7 @@ export const NODE_COLORS: Record<NodeType, {
     gradientTo: 'to-amber-600',
     glow: 'shadow-[0_0_12px_rgba(245,158,11,0.12)]',
     glowIntense: 'shadow-[0_0_24px_rgba(245,158,11,0.25)]',
+    glowColor: 'rgba(245, 158, 11, 0.3)',
     chipBg: 'bg-amber-100 dark:bg-amber-900/50',
     chipText: 'text-amber-700 dark:text-amber-300',
     chipBorder: 'border-amber-200 dark:border-amber-700/60',
@@ -93,6 +97,7 @@ export const NODE_COLORS: Record<NodeType, {
     gradientTo: 'to-violet-600',
     glow: 'shadow-[0_0_12px_rgba(139,92,246,0.12)]',
     glowIntense: 'shadow-[0_0_24px_rgba(139,92,246,0.25)]',
+    glowColor: 'rgba(139, 92, 246, 0.3)',
     chipBg: 'bg-violet-100 dark:bg-violet-900/50',
     chipText: 'text-violet-700 dark:text-violet-300',
     chipBorder: 'border-violet-200 dark:border-violet-700/60',
@@ -111,6 +116,7 @@ export const NODE_COLORS: Record<NodeType, {
     gradientTo: 'to-slate-600',
     glow: 'shadow-[0_0_12px_rgba(100,116,139,0.12)]',
     glowIntense: 'shadow-[0_0_24px_rgba(100,116,139,0.25)]',
+    glowColor: 'rgba(100, 116, 139, 0.3)',
     chipBg: 'bg-slate-100 dark:bg-slate-800/50',
     chipText: 'text-slate-700 dark:text-slate-300',
     chipBorder: 'border-slate-200 dark:border-slate-600/60',
@@ -129,6 +135,7 @@ export const NODE_COLORS: Record<NodeType, {
     gradientTo: 'to-orange-600',
     glow: 'shadow-[0_0_12px_rgba(249,115,22,0.12)]',
     glowIntense: 'shadow-[0_0_24px_rgba(249,115,22,0.25)]',
+    glowColor: 'rgba(249, 115, 22, 0.3)',
     chipBg: 'bg-orange-100 dark:bg-orange-900/50',
     chipText: 'text-orange-700 dark:text-orange-300',
     chipBorder: 'border-orange-200 dark:border-orange-700/60',

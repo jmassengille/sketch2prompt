@@ -139,7 +139,7 @@ export function QuickAddMenu() {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[3px]"
+        className="absolute inset-0 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[3px] animate-in fade-in duration-200"
         onClick={closeQuickAdd}
       />
 
@@ -153,7 +153,7 @@ export function QuickAddMenu() {
           bg-white dark:bg-slate-900
           p-5
           shadow-2xl
-          dropdown-animate
+          animate-in scale-in fade-in duration-200
           min-w-[340px]
         "
       >
@@ -186,9 +186,10 @@ export function QuickAddMenu() {
 
         {/* Grid of options */}
         <div className="grid grid-cols-3 gap-2.5">
-          {NODE_OPTIONS.map((option) => {
+          {NODE_OPTIONS.map((option, index) => {
             const Icon = option.icon
             const colors = NODE_COLOR_CLASSES[option.type]
+            const delayClass = `delay-${String((index + 1) * 50)}`
 
             return (
               <button
@@ -198,6 +199,7 @@ export function QuickAddMenu() {
                   group flex flex-col items-center gap-2 rounded-xl border p-4
                   transition-all duration-150
                   cursor-pointer
+                  animate-in fade-in ${delayClass}
                   ${colors.bg} ${colors.bgHover} ${colors.border}
                   hover:shadow-md hover:-translate-y-0.5
                 `}

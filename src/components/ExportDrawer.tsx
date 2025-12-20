@@ -20,6 +20,8 @@ import { exportJson } from '../core/export-json'
 import { importJson } from '../core/import-json'
 import { exportBlueprint, downloadBlob } from '../core/export-blueprint'
 import type { DiagramNode, DiagramEdge, NodeType } from '../core/types'
+import { BlueprintPreviewModal } from './preview'
+import { usePreviewContent } from '../hooks/usePreviewContent'
 
 type Tab = 'blueprint' | 'json'
 
@@ -44,6 +46,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [settingsExpanded, setSettingsExpanded] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Diagram store
@@ -63,6 +66,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
   const setModelId = useSettingsStore((state) => state.setModelId)
   const clearApiKey = useSettingsStore((state) => state.clearApiKey)
   const hasApiKey = useSettingsStore((state) => state.hasApiKey)
+  const outOfScope = useSettingsStore((state) => state.outOfScope)
 
   // Computed
   const useAI = hasApiKey()
@@ -70,6 +74,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
 
   // Memoize expensive computations
   const jsonContent = useMemo(() => exportJson(nodes, edges), [nodes, edges])
+  const previewFiles = usePreviewContent(nodes, edges, projectName || 'untitled-project', outOfScope)
 
   // Validation
   const canExport = nodeCount > 0 && nodeCount <= MAX_FREE_NODES
@@ -121,10 +126,12 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
           apiKey,
           apiProvider,
           modelId,
+          outOfScope,
         }
       : {
           projectName: projectName || 'untitled-project',
           useAI: false as const,
+          outOfScope,
         }
 
     const result = await exportBlueprint(nodes, edges, options)
@@ -133,6 +140,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
 
     if (result.ok) {
       downloadBlob(result.blob, result.filename)
+      setShowPreview(false)
     } else {
       setExportError(result.error)
     }
@@ -224,18 +232,18 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/20 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/20 transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-[600px] max-w-[90vw] flex-col border-l border-border bg-bg shadow-xl">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-[600px] max-w-[90vw] flex-col border-l border-border bg-bg shadow-xl animate-in slide-in-from-right-4 fade-in duration-300 delay-50">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h2 className="text-lg font-semibold text-text">Export</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-text-muted transition-colors hover:bg-bg-secondary hover:text-text"
+            className="cursor-pointer rounded-lg p-2 text-text-muted transition-colors hover:bg-bg-secondary hover:text-text"
           >
             <X className="h-5 w-5" />
           </button>
@@ -247,7 +255,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
             onClick={() => {
               setActiveTab('blueprint')
             }}
-            className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+            className={`cursor-pointer flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === 'blueprint'
                 ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
                 : 'text-text-muted hover:text-text'
@@ -260,7 +268,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
             onClick={() => {
               setActiveTab('json')
             }}
-            className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+            className={`cursor-pointer flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === 'json'
                 ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
                 : 'text-text-muted hover:text-text'
@@ -311,7 +319,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                   onClick={() => {
                     setSettingsExpanded(!settingsExpanded)
                   }}
-                  className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  className="cursor-pointer flex w-full items-center justify-between px-4 py-3 text-left"
                 >
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-amber-500" />
@@ -338,7 +346,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                         onChange={(e) => {
                           setApiProvider(e.target.value as AIProvider)
                         }}
-                        className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="cursor-pointer w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
                         <option value="anthropic">Anthropic (Claude)</option>
                         <option value="openai">OpenAI (GPT)</option>
@@ -466,7 +474,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                 />
                 <button
                   onClick={handleImportClick}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-bg px-4 py-2 text-sm font-medium text-text transition-colors hover:bg-bg-secondary"
+                  className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-bg px-4 py-2 text-sm font-medium text-text transition-colors hover:bg-bg-secondary"
                 >
                   <Upload className="h-4 w-4" />
                   Import JSON
@@ -493,10 +501,10 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
           {activeTab === 'blueprint' ? (
             <button
               onClick={() => {
-                void handleExportBlueprint()
+                setShowPreview(true)
               }}
               disabled={!canExport || isExporting}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isExporting ? (
                 <>
@@ -515,7 +523,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
               <button
                 onClick={handleCopy}
                 disabled={isCopying}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-70 ${
+                className={`cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
                   copyError
                     ? 'bg-red-500 hover:bg-red-600'
                     : 'bg-blue-500 hover:bg-blue-600'
@@ -545,7 +553,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
               </button>
               <button
                 onClick={handleDownloadJson}
-                className="flex items-center justify-center gap-2 rounded-lg border border-border bg-bg px-4 py-2 text-sm font-medium text-text transition-colors hover:bg-bg-secondary"
+                className="cursor-pointer flex items-center justify-center gap-2 rounded-lg border border-border bg-bg px-4 py-2 text-sm font-medium text-text transition-colors hover:bg-bg-secondary"
               >
                 <Download className="h-4 w-4" />
                 Download
@@ -554,6 +562,21 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
           )}
         </div>
       </div>
+
+      {/* Preview Modal */}
+      <BlueprintPreviewModal
+        isOpen={showPreview}
+        files={previewFiles}
+        projectName={projectName || 'Untitled System'}
+        isAIEnhanced={useAI}
+        isLoading={isExporting}
+        onConfirm={() => {
+          void handleExportBlueprint()
+        }}
+        onCancel={() => {
+          setShowPreview(false)
+        }}
+      />
     </>
   )
 }
