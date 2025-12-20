@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useShallow } from 'zustand/react/shallow'
-import { FileOutput, Undo2, Redo2, Play, Search } from 'lucide-react'
+import { FileOutput, Undo2, Redo2, Play, Search, Github } from 'lucide-react'
 import { Canvas } from '../components/Canvas'
 import { Inspector } from '../components/Inspector'
 import { ExportDrawer } from '../components/ExportDrawer'
@@ -276,7 +276,7 @@ export function App() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Quick Start button (only when empty) */}
           {nodesCount === 0 && (
             <button
@@ -289,6 +289,20 @@ export function App() {
             </button>
           )}
 
+          {/* GitHub link */}
+          <a
+            href="https://github.com/jmassengille/sketch2prompt"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View on GitHub"
+            className="group relative flex items-center justify-center rounded-lg p-2.5 text-[var(--color-workshop-text-muted)] transition-all duration-200 hover:text-[var(--color-workshop-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-wizard-accent)]/50"
+          >
+            <div className="absolute inset-0 rounded-lg bg-[var(--color-wizard-accent)]/0 transition-all duration-300 group-hover:bg-[var(--color-wizard-accent)]/10 group-hover:shadow-[0_0_20px_rgba(0,212,255,0.15)]" />
+            <Github className="relative h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+          </a>
+
+          {/* Divider */}
+          <div className="h-6 w-px bg-[var(--color-workshop-border)]" />
 
           {/* Generate button - primary CTA */}
           <button
