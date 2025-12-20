@@ -215,26 +215,14 @@ export function App() {
 
         <div className="flex items-center gap-6">
           {/* Logo + Title */}
-          <div className="flex items-center gap-3 group">
-            <div className="relative">
-              <img src="/no_text_logo.png" alt="sketch2prompt" className="h-9 w-auto transition-transform duration-300 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-[var(--color-wizard-accent)]/0 group-hover:bg-[var(--color-wizard-accent)]/5 rounded-lg transition-colors duration-300" />
-            </div>
-            <div className="hidden sm:block">
-              <h1
-                className="text-base font-semibold tracking-tight"
-                style={{
-                  fontFamily: 'var(--font-family-display)',
-                  background: 'linear-gradient(to right, var(--color-workshop-text), var(--color-workshop-text-muted))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
-                sketch2prompt
-              </h1>
-            </div>
-          </div>
+          <h1
+            className="text-lg font-semibold tracking-tight"
+            style={{ fontFamily: 'var(--font-family-display)' }}
+          >
+            <span className="text-[var(--color-workshop-text)]">sketch</span>
+            <span className="text-[var(--color-wizard-accent)]">2</span>
+            <span className="text-[var(--color-workshop-text)]">prompt</span>
+          </h1>
 
           {/* Divider */}
           <div className="hidden md:block h-6 w-px bg-[var(--color-workshop-border)]" />
