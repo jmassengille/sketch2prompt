@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Layers, Plus, ChevronUp, Sparkles } from 'lucide-react'
+import { Layers, Plus } from 'lucide-react'
 
 export function EmptyCanvasState() {
   const [showHint, setShowHint] = useState(false)
   const [fadeOut, setFadeOut] = useState(false)
 
   useEffect(() => {
-    const showTimer = setTimeout(() => setShowHint(true), 1500)
-    const fadeTimer = setTimeout(() => setFadeOut(true), 7000)
-    const hideTimer = setTimeout(() => setShowHint(false), 8000)
+    const showTimer = setTimeout(() => setShowHint(true), 2000)
+    const fadeTimer = setTimeout(() => setFadeOut(true), 8000)
+    const hideTimer = setTimeout(() => setShowHint(false), 9000)
     return () => {
       clearTimeout(showTimer)
       clearTimeout(fadeTimer)
@@ -18,6 +18,23 @@ export function EmptyCanvasState() {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Floating hint positioned toward top-right, pointing to Quick Start */}
+      {showHint && (
+        <div
+          className={`absolute top-24 right-8 sm:right-12 flex items-end gap-2 transition-opacity duration-700 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
+          style={{ animation: 'fadeSlideIn 0.5s ease-out' }}
+        >
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[11px] text-[var(--color-workshop-text-subtle)] tracking-wide">
+              new here?
+            </span>
+            <span className="text-xs text-[var(--color-workshop-text-muted)]">
+              try <span className="text-[var(--color-workshop-text)]">Quick Start</span> →
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col items-center gap-4 text-center max-w-sm">
         <div className="p-4 rounded-full bg-[var(--color-workshop-elevated)] border border-[var(--color-workshop-border)] animate-in fade-in duration-500">
           <Layers className="h-8 w-8 text-[var(--color-workshop-text-muted)]" />
@@ -39,18 +56,6 @@ export function EmptyCanvasState() {
           <span>button or press</span>
           <kbd className="px-1.5 py-0.5 bg-[var(--color-workshop-bg)] rounded border border-[var(--color-workshop-border)] font-mono text-[10px]">1-6</kbd>
         </div>
-
-        {showHint && (
-          <div
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--color-wizard-accent)]/10 border border-[var(--color-wizard-accent)]/30 text-[var(--color-wizard-accent)] shadow-[0_0_20px_rgba(0,212,255,0.15)] transition-all duration-500 animate-in fade-in slide-in-from-bottom-3 ${fadeOut ? 'opacity-0 translate-y-2' : 'opacity-100'}`}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="text-sm font-medium">New here?</span>
-            <span className="text-sm text-[var(--color-wizard-accent)]/80">Try</span>
-            <span className="text-sm font-semibold">Quick Start</span>
-            <ChevronUp className="h-4 w-4 animate-bounce" />
-          </div>
-        )}
       </div>
     </div>
   )
