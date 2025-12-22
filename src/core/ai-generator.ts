@@ -1,5 +1,9 @@
 import OpenAI from 'openai'
 import type { DiagramNode, DiagramEdge, NodeType } from './types'
+import type {
+  StreamingCallbacks,
+  StreamingGenerationResult,
+} from './streaming-types'
 
 export type AIProvider = 'anthropic' | 'openai'
 
@@ -123,6 +127,268 @@ async function callAI(
     if (error instanceof Error) {
       throw new Error(`Failed to generate ${taskDescription}: ${error.message}`)
     }
+    throw error
+  }
+}
+
+/**
+ * Stream AI response token-by-token (OpenAI only)
+ */
+async function callAIStreaming(
+  client: OpenAI,
+  prompt: string,
+  modelId: string,
+  fileName: string,
+  callbacks: StreamingCallbacks
+): Promise<string> {
+  callbacks.onFileStart(fileName)
+
+  let accumulated = ''
+
+  try {
+    const stream = await client.responses.create({
+      model: modelId,
+      input: prompt,
+      stream: true,
+    })
+
+    for await (const event of stream) {
+      if (event.type === 'response.output_text.delta') {
+        const delta = event.delta ?? ''
+        accumulated += delta
+        callbacks.onToken(fileName, delta)
+      }
+    }
+
+    const trimmed = accumulated.trim()
+    callbacks.onFileComplete(fileName, trimmed)
+    return trimmed
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error('Streaming failed')
+    callbacks.onError(err)
+    throw err
+  }
+}
+
+/**
+ * Slugify a string for use in filenames
+ */
+function slugify(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'untitled'
+  )
+}
+
+/**
+ * Generate with streaming support (OpenAI only)
+ * For Anthropic, falls back to non-streaming with simulated progress.
+ */
+export async function generateWithAIStreaming(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  projectName: string,
+  apiKey: string,
+  provider: AIProvider,
+  modelId: string,
+  callbacks: StreamingCallbacks
+): Promise<StreamingGenerationResult> {
+  // For Anthropic, fall back to non-streaming with simulated progress
+  if (provider === 'anthropic') {
+    return generateWithSimulatedProgress(
+      nodes,
+      edges,
+      projectName,
+      apiKey,
+      provider,
+      modelId,
+      callbacks
+    )
+  }
+
+  const client = new OpenAI({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  })
+
+  const totalFiles = 2 + nodes.length // PROJECT_RULES + AGENT_PROTOCOL + specs
+  let filesCompleted = 0
+
+  try {
+    // 1. PROJECT_RULES.md (streaming)
+    callbacks.onProgress({
+      phase: 'generating-project-rules',
+      currentFile: 'PROJECT_RULES.md',
+      filesCompleted: 0,
+      totalFiles,
+    })
+
+    const projectRulesPrompt = buildProjectRulesPrompt(nodes, edges, projectName)
+    const projectRules = await callAIStreaming(
+      client,
+      projectRulesPrompt,
+      modelId,
+      'PROJECT_RULES.md',
+      callbacks
+    )
+    filesCompleted++
+
+    // 2. AGENT_PROTOCOL.md (streaming)
+    callbacks.onProgress({
+      phase: 'generating-agent-protocol',
+      currentFile: 'AGENT_PROTOCOL.md',
+      filesCompleted,
+      totalFiles,
+    })
+
+    const agentProtocolPrompt = buildAgentProtocolPrompt(nodes, projectName)
+    const agentProtocol = await callAIStreaming(
+      client,
+      agentProtocolPrompt,
+      modelId,
+      'AGENT_PROTOCOL.md',
+      callbacks
+    )
+    filesCompleted++
+
+    // 3. Component specs (sequential streaming for visibility)
+    callbacks.onProgress({
+      phase: 'generating-component-specs',
+      currentFile: null,
+      filesCompleted,
+      totalFiles,
+    })
+
+    const componentSpecs = new Map<string, string>()
+
+    for (const node of nodes) {
+      const fileName = `specs/${slugify(node.data.label)}.yaml`
+
+      callbacks.onProgress({
+        phase: 'generating-component-specs',
+        currentFile: fileName,
+        filesCompleted,
+        totalFiles,
+      })
+
+      const prompt = buildComponentSpecPrompt(node, nodes, edges)
+      const yaml = await callAIStreaming(
+        client,
+        prompt,
+        modelId,
+        fileName,
+        callbacks
+      )
+      componentSpecs.set(node.id, yaml)
+      filesCompleted++
+    }
+
+    callbacks.onProgress({
+      phase: 'complete',
+      currentFile: null,
+      filesCompleted: totalFiles,
+      totalFiles,
+    })
+
+    return { projectRules, agentProtocol, componentSpecs }
+  } catch (error) {
+    callbacks.onProgress({
+      phase: 'error',
+      currentFile: null,
+      filesCompleted,
+      totalFiles,
+      error: error instanceof Error ? error.message : 'Generation failed',
+    })
+    throw error
+  }
+}
+
+/**
+ * Non-streaming generation with simulated progress (for Anthropic)
+ * Uses the existing generateWithAI function but emits progress events.
+ */
+async function generateWithSimulatedProgress(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  projectName: string,
+  apiKey: string,
+  provider: AIProvider,
+  modelId: string,
+  callbacks: StreamingCallbacks
+): Promise<StreamingGenerationResult> {
+  const totalFiles = 2 + nodes.length
+
+  // Signal start
+  callbacks.onProgress({
+    phase: 'generating-project-rules',
+    currentFile: 'PROJECT_RULES.md',
+    filesCompleted: 0,
+    totalFiles,
+  })
+  callbacks.onFileStart('PROJECT_RULES.md')
+
+  try {
+    // Use existing non-streaming generateWithAI
+    const result = await generateWithAI(
+      nodes,
+      edges,
+      projectName,
+      apiKey,
+      provider,
+      modelId
+    )
+
+    // Emit completion events for each file
+    callbacks.onFileComplete('PROJECT_RULES.md', result.projectRules)
+    callbacks.onProgress({
+      phase: 'generating-agent-protocol',
+      currentFile: 'AGENT_PROTOCOL.md',
+      filesCompleted: 1,
+      totalFiles,
+    })
+
+    callbacks.onFileStart('AGENT_PROTOCOL.md')
+    callbacks.onFileComplete('AGENT_PROTOCOL.md', result.agentProtocol)
+
+    let filesCompleted = 2
+    for (const [nodeId, yaml] of result.componentSpecs) {
+      const node = nodes.find((n) => n.id === nodeId)
+      const fileName = node
+        ? `specs/${slugify(node.data.label)}.yaml`
+        : `specs/component-${nodeId}.yaml`
+
+      callbacks.onProgress({
+        phase: 'generating-component-specs',
+        currentFile: fileName,
+        filesCompleted,
+        totalFiles,
+      })
+
+      callbacks.onFileStart(fileName)
+      callbacks.onFileComplete(fileName, yaml)
+      filesCompleted++
+    }
+
+    callbacks.onProgress({
+      phase: 'complete',
+      currentFile: null,
+      filesCompleted: totalFiles,
+      totalFiles,
+    })
+
+    return result
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error('Generation failed')
+    callbacks.onError(err)
+    callbacks.onProgress({
+      phase: 'error',
+      currentFile: null,
+      filesCompleted: 0,
+      totalFiles,
+      error: err.message,
+    })
     throw error
   }
 }

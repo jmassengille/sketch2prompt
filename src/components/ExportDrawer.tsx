@@ -17,10 +17,15 @@ import { useStore } from '../core/store'
 import { useSettingsStore, type AIProvider } from '../core/settings'
 import { exportJson } from '../core/export-json'
 import { importJson } from '../core/import-json'
-import { exportBlueprint, downloadBlob } from '../core/export-blueprint'
+import {
+  exportBlueprint,
+  exportBlueprintStreaming,
+  downloadBlob,
+} from '../core/export-blueprint'
 import type { DiagramNode, DiagramEdge, NodeType } from '../core/types'
 import { BlueprintPreviewModal } from './preview'
 import { usePreviewContent } from '../hooks/usePreviewContent'
+import { useStreamingExport } from '../hooks/useStreamingExport'
 
 type Tab = 'blueprint' | 'json'
 
@@ -75,6 +80,23 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
   const jsonContent = useMemo(() => exportJson(nodes, edges), [nodes, edges])
   const previewFiles = usePreviewContent(nodes, edges, projectName || 'untitled-project', outOfScope)
 
+  // Streaming export state
+  const {
+    isStreaming,
+    progress: streamingProgress,
+    streamingFiles,
+    callbacks: streamingCallbacks,
+    startStreaming,
+    stopStreaming,
+    getMergedFiles,
+  } = useStreamingExport()
+
+  // Get display files (merged with streaming content when active)
+  const displayFiles = useMemo(
+    () => getMergedFiles(previewFiles),
+    [getMergedFiles, previewFiles]
+  )
+
   // Validation
   const canExport = nodeCount > 0 && nodeCount <= MAX_FREE_NODES
   const validationError = useMemo(() => {
@@ -118,30 +140,45 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
     setIsExporting(true)
     setExportError(null)
 
-    const options = useAI
-      ? {
-          projectName: projectName || 'untitled-project',
-          useAI: true as const,
-          apiKey,
-          apiProvider,
-          modelId,
-          outOfScope,
-        }
-      : {
-          projectName: projectName || 'untitled-project',
-          useAI: false as const,
-          outOfScope,
-        }
+    // Use streaming for AI exports, regular export for templates
+    if (useAI) {
+      startStreaming()
 
-    const result = await exportBlueprint(nodes, edges, options)
+      const result = await exportBlueprintStreaming(nodes, edges, {
+        projectName: projectName || 'untitled-project',
+        useAI: true,
+        apiKey,
+        apiProvider,
+        modelId,
+        outOfScope,
+        streamingCallbacks,
+      })
 
-    setIsExporting(false)
+      stopStreaming()
+      setIsExporting(false)
 
-    if (result.ok) {
-      downloadBlob(result.blob, result.filename)
-      setShowPreview(false)
+      if (result.ok) {
+        downloadBlob(result.blob, result.filename)
+        setShowPreview(false)
+      } else {
+        setExportError(result.error)
+      }
     } else {
-      setExportError(result.error)
+      // Template-based export (no streaming)
+      const result = await exportBlueprint(nodes, edges, {
+        projectName: projectName || 'untitled-project',
+        useAI: false,
+        outOfScope,
+      })
+
+      setIsExporting(false)
+
+      if (result.ok) {
+        downloadBlob(result.blob, result.filename)
+        setShowPreview(false)
+      } else {
+        setExportError(result.error)
+      }
     }
   }
 
@@ -420,7 +457,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                         {apiKey && (
                           <button
                             onClick={clearApiKey}
-                            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                            className={`cursor-pointer rounded-lg border px-3 py-2 text-sm transition-colors ${
                               useAI
                                 ? 'border-amber-500/30 text-amber-300 hover:bg-amber-500/20'
                                 : 'border-[var(--color-workshop-border)] text-[var(--color-workshop-text-muted)] hover:bg-[var(--color-workshop-elevated)]'
@@ -605,10 +642,13 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
       {/* Preview Modal */}
       <BlueprintPreviewModal
         isOpen={showPreview}
-        files={previewFiles}
+        files={displayFiles}
         projectName={projectName || 'Untitled System'}
         isAIEnhanced={useAI}
         isLoading={isExporting}
+        isStreaming={isStreaming}
+        streamingProgress={streamingProgress}
+        streamingFiles={streamingFiles}
         onConfirm={() => {
           void handleExportBlueprint()
         }}

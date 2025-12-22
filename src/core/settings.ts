@@ -6,8 +6,8 @@ export type AIProvider = 'anthropic' | 'openai'
 
 // Default model IDs per provider
 const DEFAULT_MODELS: Record<AIProvider, string> = {
-  anthropic: 'claude-sonnet-4-5',
-  openai: 'gpt-4o',
+  anthropic: 'claude-opus-4-5-20251101',
+  openai: 'gpt-5',
 }
 
 export interface SettingsStore {

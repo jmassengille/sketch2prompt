@@ -36,14 +36,14 @@ export function NodeActions({ nodeId, selected }: NodeActionsProps) {
       <button
         onClick={handleDuplicate}
         title="Duplicate node"
-        className="rounded p-1.5 text-text-muted transition-colors hover:bg-bg-secondary hover:text-text"
+        className="cursor-pointer rounded p-1.5 text-text-muted transition-colors hover:bg-bg-secondary hover:text-text"
       >
         <Copy className="h-4 w-4" />
       </button>
       <button
         onClick={handleDelete}
         title="Delete node"
-        className="rounded p-1.5 text-text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+        className="cursor-pointer rounded p-1.5 text-text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
       >
         <Trash2 className="h-4 w-4" />
       </button>

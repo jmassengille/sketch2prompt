@@ -7,10 +7,7 @@ import JSZip from 'jszip'
 import { exportJson } from './export-json'
 import type { DiagramNode, DiagramEdge } from './types'
 import type { OutOfScopeId } from './onboarding'
-
-// These will be imported once created by subagents
-// import { generateWithAI, type AIProvider } from './ai-generator'
-// import { generateProjectRulesTemplate, generateComponentYamlTemplate } from './template-generator'
+import type { StreamingCallbacks } from './streaming-types'
 
 export type AIProvider = 'anthropic' | 'openai'
 
@@ -21,6 +18,11 @@ export interface ExportOptions {
   apiProvider?: AIProvider
   modelId?: string
   outOfScope?: OutOfScopeId[]
+}
+
+export interface StreamingExportOptions extends ExportOptions {
+  /** Callbacks for streaming progress updates */
+  streamingCallbacks: StreamingCallbacks
 }
 
 export interface ExportSuccess {
@@ -156,4 +158,81 @@ export function downloadBlob(blob: Blob, filename: string): void {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+/**
+ * Export blueprint with streaming AI generation
+ *
+ * Provides real-time progress updates via callbacks during generation.
+ * Uses streaming for OpenAI, simulated progress for Anthropic.
+ */
+export async function exportBlueprintStreaming(
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+  options: StreamingExportOptions
+): Promise<ExportResult> {
+  // Validate node count
+  if (nodes.length === 0) {
+    return { ok: false, error: 'Add at least one component to export.' }
+  }
+
+  if (nodes.length > MAX_FREE_NODES) {
+    return {
+      ok: false,
+      error: `Free tier limited to ${String(MAX_FREE_NODES)} nodes. You have ${String(nodes.length)}. Remove some components to export.`,
+    }
+  }
+
+  // Streaming requires AI settings
+  if (!options.useAI || !options.apiKey || !options.apiProvider || !options.modelId) {
+    return { ok: false, error: 'Streaming export requires AI settings.' }
+  }
+
+  try {
+    // Import streaming generator
+    const { generateWithAIStreaming } = await import('./ai-generator')
+
+    const result = await generateWithAIStreaming(
+      nodes,
+      edges,
+      options.projectName,
+      options.apiKey,
+      options.apiProvider,
+      options.modelId,
+      options.streamingCallbacks
+    )
+
+    // Create ZIP from streaming result
+    const zip = new JSZip()
+
+    // Add PROJECT_RULES.md
+    zip.file('PROJECT_RULES.md', result.projectRules)
+
+    // Add AGENT_PROTOCOL.md
+    zip.file('AGENT_PROTOCOL.md', result.agentProtocol)
+
+    // Add specs folder with component YAMLs
+    const specsFolder = zip.folder('specs')
+    if (specsFolder) {
+      for (const node of nodes) {
+        const yaml = result.componentSpecs.get(node.id) ?? ''
+        const filename = slugify(node.data.label) + '.yaml'
+        specsFolder.file(filename, yaml)
+      }
+    }
+
+    // Add diagram.json for re-import
+    const diagramJson = exportJson(nodes, edges)
+    zip.file('diagram.json', diagramJson)
+
+    // Generate blob
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const filename = `${slugify(options.projectName)}-blueprint.zip`
+
+    return { ok: true, blob, filename }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Export failed. Please try again.'
+    return { ok: false, error: message }
+  }
 }
