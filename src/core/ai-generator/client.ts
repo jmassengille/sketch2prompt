@@ -10,13 +10,17 @@ export async function callAI(
   client: OpenAI,
   prompt: string,
   modelId: string,
-  taskDescription: string
+  taskDescription: string,
+  signal?: AbortSignal
 ): Promise<string> {
   try {
-    const response = await client.responses.create({
-      model: modelId,
-      input: prompt,
-    })
+    const response = await client.responses.create(
+      {
+        model: modelId,
+        input: prompt,
+      },
+      { signal }
+    )
 
     const content = response.output_text
     if (!content) {
@@ -25,6 +29,10 @@ export async function callAI(
 
     return content.trim()
   } catch (error) {
+    // Handle abort gracefully
+    if (signal?.aborted) {
+      throw new Error(`Generation cancelled for ${taskDescription}`)
+    }
     if (error instanceof Error) {
       throw new Error(`Failed to generate ${taskDescription}: ${error.message}`)
     }

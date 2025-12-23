@@ -19,13 +19,12 @@ import { exportJson } from '../core/export-json'
 import { importJson } from '../core/import-json'
 import {
   exportBlueprint,
-  exportBlueprintStreaming,
   downloadBlob,
 } from '../core/export-blueprint'
 import type { DiagramNode, DiagramEdge, NodeType } from '../core/types'
 import { BlueprintPreviewModal } from './preview'
 import { usePreviewContent } from '../hooks/usePreviewContent'
-import { useStreamingExport } from '../hooks/useStreamingExport'
+import { useExportProgress } from '../hooks/useExportProgress'
 
 type Tab = 'blueprint' | 'json'
 
@@ -80,22 +79,34 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
   const jsonContent = useMemo(() => exportJson(nodes, edges), [nodes, edges])
   const previewFiles = usePreviewContent(nodes, edges, projectName || 'untitled-project', outOfScope)
 
-  // Streaming export state
+  // Export progress state (parallel generation)
   const {
-    isStreaming,
-    progress: streamingProgress,
-    streamingFiles,
-    callbacks: streamingCallbacks,
-    startStreaming,
-    stopStreaming,
-    getMergedFiles,
-  } = useStreamingExport()
+    progress: exportProgress,
+    startExport,
+    onFileComplete,
+    complete: completeExport,
+    setError: setExportProgressError,
+    abort: abortExport,
+    reset: resetExport,
+  } = useExportProgress()
 
-  // Get display files (merged with streaming content when active)
-  const displayFiles = useMemo(
-    () => getMergedFiles(previewFiles),
-    [getMergedFiles, previewFiles]
-  )
+  // Merge preview files with AI-generated content when available
+  const displayFiles = useMemo(() => {
+    if (exportProgress.files.size === 0) {
+      return previewFiles
+    }
+    return previewFiles.map((file) => {
+      const content = exportProgress.files.get(file.name)
+      if (content) {
+        return {
+          ...file,
+          content,
+          size: new TextEncoder().encode(content).length,
+        }
+      }
+      return file
+    })
+  }, [previewFiles, exportProgress.files])
 
   // Validation
   const canExport = nodeCount > 0 && nodeCount <= MAX_FREE_NODES
@@ -140,45 +151,35 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
     setIsExporting(true)
     setExportError(null)
 
-    // Use streaming for AI exports, regular export for templates
+    // Start parallel export with abort signal
+    const signal = useAI ? startExport() : undefined
+
+    const result = await exportBlueprint(nodes, edges, {
+      projectName: projectName || 'untitled-project',
+      useAI,
+      apiKey,
+      apiProvider,
+      modelId,
+      outOfScope,
+      signal,
+      onFileComplete: useAI ? onFileComplete : undefined,
+    })
+
     if (useAI) {
-      startStreaming()
-
-      const result = await exportBlueprintStreaming(nodes, edges, {
-        projectName: projectName || 'untitled-project',
-        useAI: true,
-        apiKey,
-        apiProvider,
-        modelId,
-        outOfScope,
-        streamingCallbacks,
-      })
-
-      stopStreaming()
-      setIsExporting(false)
-
       if (result.ok) {
-        downloadBlob(result.blob, result.filename)
-        setShowPreview(false)
+        completeExport()
       } else {
-        setExportError(result.error)
+        setExportProgressError(result.error)
       }
+    }
+
+    setIsExporting(false)
+
+    if (result.ok) {
+      downloadBlob(result.blob, result.filename)
+      setShowPreview(false)
     } else {
-      // Template-based export (no streaming)
-      const result = await exportBlueprint(nodes, edges, {
-        projectName: projectName || 'untitled-project',
-        useAI: false,
-        outOfScope,
-      })
-
-      setIsExporting(false)
-
-      if (result.ok) {
-        downloadBlob(result.blob, result.filename)
-        setShowPreview(false)
-      } else {
-        setExportError(result.error)
-      }
+      setExportError(result.error)
     }
   }
 
@@ -646,14 +647,14 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
         projectName={projectName || 'Untitled System'}
         isAIEnhanced={useAI}
         isLoading={isExporting}
-        isStreaming={isStreaming}
-        streamingProgress={streamingProgress}
-        streamingFiles={streamingFiles}
+        exportProgress={exportProgress}
+        totalFiles={2 + nodeCount}
         onConfirm={() => {
           void handleExportBlueprint()
         }}
         onCancel={() => {
-          stopStreaming()
+          abortExport()
+          resetExport()
           setShowPreview(false)
         }}
       />

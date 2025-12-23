@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, Download, Sparkles, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FileTreePreview, type PreviewFile } from './FileTreePreview'
-import type {
-  StreamingProgress,
-  StreamingFileState,
-} from '../../core/streaming-types'
+import type { ExportProgress } from '../../hooks/useExportProgress'
 
 interface BlueprintPreviewModalProps {
   isOpen: boolean
@@ -13,52 +10,12 @@ interface BlueprintPreviewModalProps {
   projectName: string
   isAIEnhanced: boolean
   isLoading?: boolean
-  /** Whether streaming is active */
-  isStreaming?: boolean
-  /** Current streaming progress */
-  streamingProgress?: StreamingProgress | null
-  /** Map of streaming file states */
-  streamingFiles?: Map<string, StreamingFileState>
+  /** Current export progress (parallel generation) */
+  exportProgress?: ExportProgress
+  /** Total number of files to generate */
+  totalFiles?: number
   onConfirm: () => void
   onCancel: () => void
-}
-
-/** Get human-readable progress label */
-function getProgressLabel(progress: StreamingProgress): string {
-  switch (progress.phase) {
-    case 'idle':
-      return 'Initializing'
-    case 'generating-project-rules':
-      return 'Compiling project rules'
-    case 'generating-agent-protocol':
-      return 'Defining agent protocol'
-    case 'generating-component-specs':
-      return 'Generating component specs'
-    case 'complete':
-      return 'Blueprint complete'
-    case 'error':
-      return 'Generation failed'
-    default:
-      return 'Processing'
-  }
-}
-
-/** Get phase step number */
-function getPhaseStep(progress: StreamingProgress): number {
-  switch (progress.phase) {
-    case 'idle':
-      return 0
-    case 'generating-project-rules':
-      return 1
-    case 'generating-agent-protocol':
-      return 2
-    case 'generating-component-specs':
-      return 3
-    case 'complete':
-      return 4
-    default:
-      return 0
-  }
 }
 
 export function BlueprintPreviewModal({
@@ -67,12 +24,15 @@ export function BlueprintPreviewModal({
   projectName,
   isAIEnhanced,
   isLoading = false,
-  isStreaming = false,
-  streamingProgress,
-  streamingFiles,
+  exportProgress,
+  totalFiles = 0,
   onConfirm,
   onCancel,
 }: BlueprintPreviewModalProps) {
+  // Derive streaming state from export progress
+  const isGenerating = exportProgress?.generating ?? false
+  const filesCompleted = exportProgress?.completed.size ?? 0
+  const progressPercent = totalFiles > 0 ? (filesCompleted / totalFiles) * 100 : 0
   const [isVisible, setIsVisible] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
 
@@ -108,7 +68,7 @@ export function BlueprintPreviewModal({
     if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isStreaming) {
+      if (e.key === 'Escape' && !isGenerating) {
         handleClose()
       }
     }
@@ -116,14 +76,11 @@ export function BlueprintPreviewModal({
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, handleClose, isStreaming])
+  }, [isOpen, handleClose, isGenerating])
 
   if (!isOpen && !isVisible) return null
 
   const fileCount = files.length
-  const progressPercent = streamingProgress?.totalFiles
-    ? (streamingProgress.filesCompleted / streamingProgress.totalFiles) * 100
-    : 0
 
   return (
     <div
@@ -131,7 +88,7 @@ export function BlueprintPreviewModal({
         'fixed inset-0 z-50 flex items-center justify-center transition-all duration-500',
         isVisible && !isExiting ? 'opacity-100' : 'opacity-0'
       )}
-      onClick={isStreaming ? undefined : handleClose}
+      onClick={isGenerating ? undefined : handleClose}
     >
       {/* Backdrop with blueprint grid */}
       <div className="absolute inset-0">
@@ -210,37 +167,37 @@ export function BlueprintPreviewModal({
           <div
             className={cn(
               'absolute -top-px -left-px w-6 h-6 border-l-2 border-t-2 transition-all duration-500',
-              isStreaming ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
+              isGenerating ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
             )}
             style={{
-              boxShadow: isStreaming ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
+              boxShadow: isGenerating ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
             }}
           />
           <div
             className={cn(
               'absolute -top-px -right-px w-6 h-6 border-r-2 border-t-2 transition-all duration-500',
-              isStreaming ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
+              isGenerating ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
             )}
             style={{
-              boxShadow: isStreaming ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
+              boxShadow: isGenerating ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
             }}
           />
           <div
             className={cn(
               'absolute -bottom-px -left-px w-6 h-6 border-l-2 border-b-2 transition-all duration-500',
-              isStreaming ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
+              isGenerating ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
             )}
             style={{
-              boxShadow: isStreaming ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
+              boxShadow: isGenerating ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
             }}
           />
           <div
             className={cn(
               'absolute -bottom-px -right-px w-6 h-6 border-r-2 border-b-2 transition-all duration-500',
-              isStreaming ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
+              isGenerating ? 'border-[var(--color-wizard-accent)]' : 'border-[var(--color-wizard-accent)]/50'
             )}
             style={{
-              boxShadow: isStreaming ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
+              boxShadow: isGenerating ? '0 0 10px var(--color-wizard-accent-glow)' : 'none',
             }}
           />
 
@@ -254,16 +211,16 @@ export function BlueprintPreviewModal({
               <div
                 className={cn(
                   'flex items-center justify-center w-10 h-10 rounded transition-all duration-300',
-                  isStreaming
+                  isGenerating
                     ? 'bg-[var(--color-wizard-accent)]/20'
                     : 'bg-[var(--color-workshop-elevated)]'
                 )}
                 style={{
-                  border: `1px solid ${isStreaming ? 'var(--color-wizard-accent)' : 'var(--color-workshop-border)'}`,
-                  boxShadow: isStreaming ? 'var(--shadow-glow-subtle)' : 'none',
+                  border: `1px solid ${isGenerating ? 'var(--color-wizard-accent)' : 'var(--color-workshop-border)'}`,
+                  boxShadow: isGenerating ? 'var(--shadow-glow-subtle)' : 'none',
                 }}
               >
-                {isStreaming ? (
+                {isGenerating ? (
                   <Zap
                     className="size-5 text-[var(--color-wizard-accent)]"
                     style={{
@@ -294,7 +251,7 @@ export function BlueprintPreviewModal({
                     color: 'var(--color-workshop-text)',
                   }}
                 >
-                  {isStreaming ? 'Generating Blueprint' : 'Blueprint Preview'}
+                  {isGenerating ? 'Generating Blueprint' : 'Blueprint Preview'}
                 </h2>
                 <div
                   className="flex items-center gap-3 mt-1"
@@ -324,10 +281,10 @@ export function BlueprintPreviewModal({
 
             <button
               onClick={handleClose}
-              disabled={isStreaming}
+              disabled={isGenerating}
               className={cn(
                 'rounded p-2 transition-all duration-200',
-                isStreaming
+                isGenerating
                   ? 'opacity-30 cursor-not-allowed'
                   : 'cursor-pointer hover:bg-[var(--color-workshop-elevated)] text-[var(--color-workshop-text-muted)] hover:text-[var(--color-workshop-text)]'
               )}
@@ -337,8 +294,8 @@ export function BlueprintPreviewModal({
             </button>
           </div>
 
-          {/* Streaming Progress Section */}
-          {isStreaming && streamingProgress && (
+          {/* Generation Progress Section */}
+          {isGenerating && totalFiles > 0 && (
             <div
               className="px-6 py-4"
               style={{
@@ -377,13 +334,7 @@ export function BlueprintPreviewModal({
                         fontFamily: 'var(--font-family-sans)',
                       }}
                     >
-                      {getProgressLabel(streamingProgress)}
-                    </span>
-                    <span
-                      className="text-xs ml-2"
-                      style={{ color: 'var(--color-workshop-text-subtle)' }}
-                    >
-                      Phase {getPhaseStep(streamingProgress)}/3
+                      Generating files in parallel
                     </span>
                   </div>
                 </div>
@@ -397,13 +348,13 @@ export function BlueprintPreviewModal({
                     className="text-xl font-light tabular-nums"
                     style={{ color: 'var(--color-wizard-accent)' }}
                   >
-                    {streamingProgress.filesCompleted}
+                    {filesCompleted}
                   </span>
                   <span
                     className="text-sm"
                     style={{ color: 'var(--color-workshop-text-subtle)' }}
                   >
-                    / {streamingProgress.totalFiles}
+                    / {totalFiles}
                   </span>
                 </div>
               </div>
@@ -429,38 +380,11 @@ export function BlueprintPreviewModal({
                   className="relative h-full rounded-full transition-all duration-500 ease-out"
                   style={{
                     width: `${String(progressPercent)}%`,
-                    background:
-                      'linear-gradient(90deg, var(--color-wizard-accent) 0%, #2DD4BF 100%)',
+                    background: 'var(--color-wizard-accent)',
                     boxShadow: '0 0 12px var(--color-wizard-accent-glow)',
                   }}
                 />
               </div>
-
-              {/* Current file indicator */}
-              {streamingProgress.currentFile && (
-                <div
-                  className="flex items-center gap-2 mt-3"
-                  style={{ fontFamily: 'var(--font-family-mono)' }}
-                >
-                  <svg
-                    className="size-3.5 animate-pulse"
-                    style={{ color: 'var(--color-wizard-accent)' }}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <polyline points="4 17 10 11 4 5" />
-                    <line x1="12" y1="19" x2="20" y2="19" />
-                  </svg>
-                  <span
-                    className="text-xs truncate"
-                    style={{ color: 'var(--color-workshop-text-muted)' }}
-                  >
-                    {streamingProgress.currentFile}
-                  </span>
-                </div>
-              )}
             </div>
           )}
 
@@ -471,12 +395,12 @@ export function BlueprintPreviewModal({
           >
             <FileTreePreview
               files={files}
-              {...(streamingFiles ? { streamingFiles } : {})}
-              isStreaming={isStreaming}
+              completedFiles={exportProgress?.completed}
+              isGenerating={isGenerating}
             />
 
             {/* AI Enhancement Note - only show when not streaming */}
-            {isAIEnhanced && !isStreaming && (
+            {isAIEnhanced && !isGenerating && (
               <div
                 className="mt-4 flex items-center gap-3 rounded px-4 py-3"
                 style={{
@@ -515,13 +439,13 @@ export function BlueprintPreviewModal({
               <div
                 className={cn(
                   'w-2 h-2 rounded-full',
-                  isStreaming ? 'animate-pulse' : ''
+                  isGenerating ? 'animate-pulse' : ''
                 )}
                 style={{
-                  background: isStreaming
+                  background: isGenerating
                     ? 'var(--color-wizard-accent)'
                     : 'var(--color-success)',
-                  boxShadow: isStreaming
+                  boxShadow: isGenerating
                     ? '0 0 8px var(--color-wizard-accent)'
                     : 'none',
                 }}
@@ -530,7 +454,7 @@ export function BlueprintPreviewModal({
                 className="text-xs"
                 style={{ color: 'var(--color-workshop-text-subtle)' }}
               >
-                {isStreaming ? 'Processing...' : 'Ready'}
+                {isGenerating ? 'Processing...' : 'Ready'}
               </span>
             </div>
 
@@ -541,41 +465,41 @@ export function BlueprintPreviewModal({
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded transition-all duration-200',
                   'cursor-pointer hover:bg-[var(--color-workshop-elevated)]',
-                  isStreaming && 'hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'
+                  isGenerating && 'hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'
                 )}
                 style={{
-                  color: isStreaming ? 'var(--color-workshop-text)' : 'var(--color-workshop-text-muted)',
+                  color: isGenerating ? 'var(--color-workshop-text)' : 'var(--color-workshop-text-muted)',
                   border: '1px solid var(--color-workshop-border)',
                 }}
               >
-                {isStreaming ? 'Cancel' : 'Cancel'}
+                {isGenerating ? 'Cancel' : 'Cancel'}
               </button>
 
               <button
                 onClick={handleConfirm}
-                disabled={isLoading || isStreaming}
+                disabled={isLoading || isGenerating}
                 className={cn(
                   'flex items-center gap-2 px-5 py-2 text-sm font-medium rounded transition-all duration-200',
-                  isLoading || isStreaming
+                  isLoading || isGenerating
                     ? 'opacity-60 cursor-not-allowed'
                     : 'cursor-pointer hover:brightness-110'
                 )}
                 style={{
-                  background: isStreaming
+                  background: isGenerating
                     ? 'var(--color-workshop-elevated)'
                     : 'linear-gradient(135deg, var(--color-wizard-accent) 0%, #0D9488 100%)',
-                  color: isStreaming
+                  color: isGenerating
                     ? 'var(--color-workshop-text-muted)'
                     : 'white',
-                  border: isStreaming
+                  border: isGenerating
                     ? '1px solid var(--color-workshop-border)'
                     : 'none',
-                  boxShadow: isStreaming
+                  boxShadow: isGenerating
                     ? 'none'
                     : '0 4px 12px rgba(20, 184, 166, 0.3)',
                 }}
               >
-                {isLoading || isStreaming ? (
+                {isLoading || isGenerating ? (
                   <>
                     <svg
                       className="size-4 animate-spin"
@@ -596,7 +520,7 @@ export function BlueprintPreviewModal({
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       />
                     </svg>
-                    <span>{isStreaming ? 'Generating...' : 'Preparing...'}</span>
+                    <span>{isGenerating ? 'Generating...' : 'Preparing...'}</span>
                   </>
                 ) : (
                   <>

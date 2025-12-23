@@ -1,7 +1,6 @@
 import { FileText, FolderOpen, ChevronRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CodePreview } from './CodePreview'
-import type { StreamingFileState } from '../../core/streaming-types'
 
 export interface PreviewFile {
   name: string // e.g., "PROJECT_RULES.md" or "specs/web-app.yaml"
@@ -13,11 +12,11 @@ export interface PreviewFile {
 
 interface FileTreePreviewProps {
   files: PreviewFile[]
-  defaultOpen?: string[] // File names to open by default
-  /** Map of streaming file states */
-  streamingFiles?: Map<string, StreamingFileState>
-  /** Whether streaming is active */
-  isStreaming?: boolean
+  defaultOpen?: string[] | undefined // File names to open by default
+  /** Set of completed file names */
+  completedFiles?: Set<string> | undefined
+  /** Whether generation is active */
+  isGenerating?: boolean | undefined
 }
 
 function formatSize(bytes: number): string {
@@ -293,21 +292,17 @@ function FileEntry({
 export function FileTreePreview({
   files,
   defaultOpen = [],
-  streamingFiles,
-  isStreaming = false,
+  completedFiles,
+  isGenerating = false,
 }: FileTreePreviewProps) {
   const { root, specs } = groupFiles(files)
 
-  // Helper to get streaming state for a file
-  const getFileStreamingState = (fileName: string) => {
-    if (!isStreaming || !streamingFiles) {
-      return { isFileStreaming: false, isFileComplete: false }
-    }
-    const state = streamingFiles.get(fileName)
-    return {
-      isFileStreaming: state?.isActive ?? false,
-      isFileComplete: state?.isComplete ?? false,
-    }
+  // Helper to get file state for display
+  const getFileState = (fileName: string) => {
+    const isComplete = completedFiles?.has(fileName) ?? false
+    // In parallel generation, a file is "streaming" if generating is active and it's not yet complete
+    const isFileStreaming = isGenerating && !isComplete
+    return { isFileStreaming, isFileComplete: isComplete }
   }
 
   return (
@@ -320,7 +315,7 @@ export function FileTreePreview({
     >
       {/* Root files */}
       {root.map((file, index) => {
-        const { isFileStreaming, isFileComplete } = getFileStreamingState(file.name)
+        const { isFileStreaming, isFileComplete } = getFileState(file.name)
         return (
           <FileEntry
             key={file.name}
@@ -371,7 +366,7 @@ export function FileTreePreview({
 
           {/* Spec files */}
           {specs.map((file, index) => {
-            const { isFileStreaming, isFileComplete } = getFileStreamingState(file.name)
+            const { isFileStreaming, isFileComplete } = getFileState(file.name)
             return (
               <FileEntry
                 key={file.name}

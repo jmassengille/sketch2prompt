@@ -24,7 +24,7 @@ function getTypeSummary(nodes: DiagramNode[]): string {
     typeCounts[type] = (typeCounts[type] ?? 0) + 1
   })
   return Object.entries(typeCounts)
-    .map(([type, count]) => `${count} ${type}`)
+    .map(([type, count]) => `${String(count)} ${type}`)
     .join(', ')
 }
 

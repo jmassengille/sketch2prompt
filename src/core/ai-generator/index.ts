@@ -1,3 +1,4 @@
 // Public API
-export { generateWithAI, generateWithAIStreaming } from './orchestrator'
+export { generateWithAI } from './orchestrator'
+export type { GenerateOptions } from './orchestrator'
 export type { AIProvider, GenerationResult } from './types'
