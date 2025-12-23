@@ -242,6 +242,33 @@ Custom code only when no suitable library exists or you've flagged it and user a
 
 ---
 
+## Minimalism Mandate (NON-NEGOTIABLE)
+
+**Start simple. Scale when necessary. Not before.**
+
+### ALWAYS
+- Begin with the simplest architecture that could work
+- Prefer stdlib over library, library over framework
+- Use lightweight solutions (SQLite before PostgreSQL clusters, monolith before microservices)
+- Write three similar lines before extracting a helper
+- Question every dependency: "Do I actually need this?"
+
+### NEVER add without explicit user request
+- Message queues (Redis queues, RabbitMQ, SQS)
+- Microservices or service mesh
+- CQRS or event sourcing
+- Kubernetes or container orchestration
+- GraphQL when REST suffices
+- State management libraries when React state works
+- ORMs when raw queries are simpler
+
+### WHY THIS MATTERS
+Premature complexity is the #1 cause of project failure. Every abstraction has a cost. Every dependency is a liability. Every service boundary is a failure point.
+
+**If the user didn't ask for it, don't add it.**
+
+---
+
 ${codeStandards}
 `
 }

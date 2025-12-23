@@ -7,7 +7,7 @@
  * IMPORTANT: Keys must EXACTLY match the `label` field in STACK_OPTIONS and CAPABILITY_CONFIGS
  * from src/core/onboarding/onboarding-defaults.ts
  *
- * These versions are verified as of 2025-12-19.
+ * These versions are verified as of 2025-12-22.
  * Downstream agents should verify latest versions before installing.
  *
  * Registry URL patterns for verification:
@@ -104,7 +104,7 @@ export const KNOWN_PACKAGES: Record<string, KnownPackage[]> = {
   'Next.js': [
     {
       name: 'next',
-      version: '^16.1.0',
+      version: '^16.1.1',
       purpose: 'React framework for production',
       docs: 'https://nextjs.org/docs',
       registry: 'npm',
@@ -193,7 +193,7 @@ export const KNOWN_PACKAGES: Record<string, KnownPackage[]> = {
     },
     {
       name: 'uvicorn',
-      version: '>=0.38.0',
+      version: '>=0.40.0',
       purpose: 'ASGI server (required runtime)',
       docs: 'https://www.uvicorn.org',
       registry: 'pypi',
@@ -394,7 +394,7 @@ export const KNOWN_PACKAGES: Record<string, KnownPackage[]> = {
   'OpenAI-python': [
     {
       name: 'openai',
-      version: '>=1.58.0',
+      version: '>=2.14.0',
       purpose: 'OpenAI API client',
       docs: 'https://platform.openai.com/docs',
       registry: 'pypi',
@@ -413,7 +413,7 @@ export const KNOWN_PACKAGES: Record<string, KnownPackage[]> = {
     {
       name: 'anthropic',
       version: '>=0.75.0',
-      purpose: 'Anthropic API client',
+      purpose: 'Anthropic Claude API client',
       docs: 'https://docs.anthropic.com',
       registry: 'pypi',
     },
@@ -652,7 +652,7 @@ export const KNOWN_PACKAGES: Record<string, KnownPackage[]> = {
   prisma: [
     {
       name: 'prisma',
-      version: '^7.2.0',
+      version: '^7.2.1',
       purpose: 'TypeScript ORM',
       docs: 'https://www.prisma.io/docs',
       registry: 'npm',
@@ -706,7 +706,7 @@ const PYTHON_AI_PROVIDERS = ['OpenAI', 'Anthropic', 'Google AI (Gemini)', 'Ollam
  * Detect primary language from tech stack for registry selection
  */
 export function detectLanguage(techStack: string[]): 'python' | 'typescript' | 'javascript' | 'java' | 'csharp' | 'go' | 'rust' | undefined {
-  if (!techStack || techStack.length === 0) return undefined
+  if (techStack.length === 0) return undefined
 
   // Check for explicit language selection
   if (techStack.includes('Python')) return 'python'

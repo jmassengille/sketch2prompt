@@ -42,8 +42,6 @@ export interface StreamingProgress {
 
 /** Callbacks for streaming events */
 export interface StreamingCallbacks {
-  /** Called for each token received (OpenAI streaming only) */
-  onToken: (fileName: string, token: string) => void
   /** Called when a file starts generating */
   onFileStart: (fileName: string) => void
   /** Called when a file finishes generating */

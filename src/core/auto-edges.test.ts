@@ -83,7 +83,7 @@ describe('autoGenerateEdges', () => {
     // backend -> external/OpenAI (inference)
     expect(edges.length).toBeGreaterThanOrEqual(5)
 
-    const edgeLabels = edges.map((e) => `${e.source}->${e.target}:${e.data?.label}`)
+    const edgeLabels = edges.map((e) => `${e.source}->${e.target}:${e.data?.label ?? ''}`)
     expect(edgeLabels).toContain('fe1->be1:API calls')
     expect(edgeLabels).toContain('fe1->auth1:authenticates')
     expect(edgeLabels).toContain('be1->db1:queries')
@@ -131,7 +131,7 @@ describe('autoGenerateEdges', () => {
 
     const edges = autoGenerateEdges(nodes)
 
-    const edgeLabels = edges.map((e) => `${e.source}->${e.target}:${e.data?.label}`)
+    const edgeLabels = edges.map((e) => `${e.source}->${e.target}:${e.data?.label ?? ''}`)
     expect(edgeLabels).toContain('bg1->be1:triggers')
     expect(edgeLabels).toContain('bg1->db1:processes')
   })

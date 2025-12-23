@@ -428,7 +428,7 @@ export function BlueprintPreviewModal({
                 <div
                   className="relative h-full rounded-full transition-all duration-500 ease-out"
                   style={{
-                    width: `${progressPercent}%`,
+                    width: `${String(progressPercent)}%`,
                     background:
                       'linear-gradient(90deg, var(--color-wizard-accent) 0%, #2DD4BF 100%)',
                     boxShadow: '0 0 12px var(--color-wizard-accent-glow)',
@@ -538,19 +538,17 @@ export function BlueprintPreviewModal({
             <div className="flex items-center gap-3">
               <button
                 onClick={handleClose}
-                disabled={isLoading}
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded transition-all duration-200',
-                  isLoading
-                    ? 'opacity-40 cursor-not-allowed'
-                    : 'cursor-pointer hover:bg-[var(--color-workshop-elevated)]'
+                  'cursor-pointer hover:bg-[var(--color-workshop-elevated)]',
+                  isStreaming && 'hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'
                 )}
                 style={{
-                  color: 'var(--color-workshop-text-muted)',
+                  color: isStreaming ? 'var(--color-workshop-text)' : 'var(--color-workshop-text-muted)',
                   border: '1px solid var(--color-workshop-border)',
                 }}
               >
-                {isStreaming ? 'Stop' : 'Cancel'}
+                {isStreaming ? 'Cancel' : 'Cancel'}
               </button>
 
               <button

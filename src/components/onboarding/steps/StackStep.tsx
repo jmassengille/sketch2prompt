@@ -169,7 +169,7 @@ export function StackStep() {
             icon={<Monitor className="size-5" />}
             accentColor="teal"
             expanded={frontendExpanded}
-            onToggle={() => setFrontendExpanded(!frontendExpanded)}
+            onToggle={() => { setFrontendExpanded(!frontendExpanded); }}
             languages={allLanguages.filter((l) => FRONTEND_LANGUAGES.includes(l.id))}
             selectedLanguages={selectedFrontendLanguages}
             onToggleLanguage={toggleFrontendLanguage}
@@ -187,7 +187,7 @@ export function StackStep() {
             icon={<Server className="size-5" />}
             accentColor="purple"
             expanded={backendExpanded}
-            onToggle={() => setBackendExpanded(!backendExpanded)}
+            onToggle={() => { setBackendExpanded(!backendExpanded); }}
             languages={allLanguages.filter((l) => BACKEND_LANGUAGES.includes(l.id))}
             selectedLanguages={selectedBackendLanguages}
             onToggleLanguage={toggleBackendLanguage}
@@ -277,7 +277,7 @@ export function StackStep() {
           accentColor="amber"
           value={data.stack.database}
           options={databaseOptions}
-          onChange={(val) => updateStack({ database: val })}
+          onChange={(val) => { updateStack({ database: val }); }}
         />
 
         {needsAiProvider && (
@@ -287,7 +287,7 @@ export function StackStep() {
             accentColor="amber"
             value={data.stack.aiProvider}
             options={aiProviderOptions}
-            onChange={(val) => updateStack({ aiProvider: val })}
+            onChange={(val) => { updateStack({ aiProvider: val }); }}
             required
           />
         )}
@@ -361,7 +361,7 @@ function StackColumn({
         className="cursor-pointer w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-t-xl"
       >
         <div className="flex items-center gap-3">
-          <div className={`${accent.text}`}>{icon}</div>
+          <div className={accent.text}>{icon}</div>
           <span className="font-semibold text-lg text-[var(--color-workshop-text)]">
             {title}
           </span>
@@ -398,7 +398,7 @@ function StackColumn({
                 return (
                   <button
                     key={lang.id}
-                    onClick={() => onToggleLanguage(lang.label)}
+                    onClick={() => { onToggleLanguage(lang.label); }}
                     className={`
                       cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150
                       ${isSelected
@@ -437,7 +437,7 @@ function StackColumn({
                   return (
                     <button
                       key={fw.id}
-                      onClick={() => onSelectFramework(fw.label)}
+                      onClick={() => { onSelectFramework(fw.label); }}
                       className={`
                         cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150
                         ${isSelected
@@ -546,7 +546,7 @@ function StackSelector({
             return (
               <button
                 key={opt.id}
-                onClick={() => onChange(opt.label)}
+                onClick={() => { onChange(opt.label); }}
                 className={`
                   cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150
                   ${isSelected

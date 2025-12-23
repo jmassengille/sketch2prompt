@@ -8,6 +8,7 @@ import { exportJson } from './export-json'
 import type { DiagramNode, DiagramEdge } from './types'
 import type { OutOfScopeId } from './onboarding'
 import type { StreamingCallbacks } from './streaming-types'
+import { slugify } from './utils/slugify'
 
 export type AIProvider = 'anthropic' | 'openai'
 
@@ -41,21 +42,10 @@ export type ExportResult = ExportSuccess | ExportError
 const MAX_FREE_NODES = 8
 
 /**
- * Slugify a string for use in filenames
- */
-function slugify(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'untitled'
-  )
-}
-
-/**
  * Export diagram as a blueprint ZIP file
  *
  * Structure:
+ * - START.md (bootstrap - read first, confirms setup, generates IDE config)
  * - PROJECT_RULES.md (system constitution)
  * - AGENT_PROTOCOL.md (workflow guidance)
  * - specs/*.yaml (per-component specs)
@@ -112,8 +102,15 @@ export async function exportBlueprint(
       }
     }
 
+    // Generate START.md (always template-based - it's a bootstrap prompt)
+    const { generateStartMd } = await import('./template-generator')
+    const startMd = generateStartMd(nodes, options.projectName)
+
     // Create ZIP
     const zip = new JSZip()
+
+    // Add START.md (read this first)
+    zip.file('START.md', startMd)
 
     // Add PROJECT_RULES.md
     zip.file('PROJECT_RULES.md', projectRules)
@@ -202,8 +199,15 @@ export async function exportBlueprintStreaming(
       options.streamingCallbacks
     )
 
+    // Generate START.md (always template-based - it's a bootstrap prompt)
+    const { generateStartMd } = await import('./template-generator')
+    const startMd = generateStartMd(nodes, options.projectName)
+
     // Create ZIP from streaming result
     const zip = new JSZip()
+
+    // Add START.md (read this first)
+    zip.file('START.md', startMd)
 
     // Add PROJECT_RULES.md
     zip.file('PROJECT_RULES.md', result.projectRules)

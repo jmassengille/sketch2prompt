@@ -3,18 +3,13 @@ import {
   generateProjectRulesTemplate,
   generateAgentProtocolTemplate,
   generateComponentYamlTemplate,
+  generateStartMd,
 } from '../core/template-generator'
 import { exportJson } from '../core/export-json'
 import type { DiagramNode, DiagramEdge } from '../core/types'
 import type { PreviewFile } from '../components/preview/FileTreePreview'
 import type { OutOfScopeId } from '../core/onboarding'
-
-function slugify(label: string): string {
-  return label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
+import { slugify } from '../core/utils/slugify'
 
 function getByteSize(content: string): number {
   return new TextEncoder().encode(content).length
@@ -29,7 +24,17 @@ export function usePreviewContent(
   return useMemo(() => {
     const files: PreviewFile[] = []
 
-    // 1. PROJECT_RULES.md (always first)
+    // 1. START.md (bootstrap - read first)
+    const startMd = generateStartMd(nodes, projectName)
+    files.push({
+      name: 'START.md',
+      content: startMd,
+      language: 'markdown',
+      size: getByteSize(startMd),
+      description: 'Read first: confirms setup and guides IDE configuration',
+    })
+
+    // 2. PROJECT_RULES.md
     const projectRules = generateProjectRulesTemplate(nodes, edges, projectName)
     files.push({
       name: 'PROJECT_RULES.md',
@@ -39,7 +44,7 @@ export function usePreviewContent(
       description: 'System boundaries, component registry, and architectural constraints',
     })
 
-    // 2. AGENT_PROTOCOL.md (always second)
+    // 3. AGENT_PROTOCOL.md
     const agentProtocol = generateAgentProtocolTemplate(nodes, projectName, outOfScope)
     files.push({
       name: 'AGENT_PROTOCOL.md',
@@ -49,7 +54,7 @@ export function usePreviewContent(
       description: 'Workflow phases, code standards, and implementation guidance',
     })
 
-    // 3. specs/*.yaml (sorted alphabetically by filename)
+    // 4. specs/*.yaml (sorted alphabetically by filename)
     const specFiles: PreviewFile[] = nodes.map((node) => {
       const slug = slugify(node.data.label)
       const filename = `specs/${slug}.yaml`
@@ -67,7 +72,7 @@ export function usePreviewContent(
     specFiles.sort((a, b) => a.name.localeCompare(b.name))
     files.push(...specFiles)
 
-    // 4. diagram.json (always last)
+    // 5. diagram.json (always last)
     const diagramJson = exportJson(nodes, edges)
     files.push({
       name: 'diagram.json',

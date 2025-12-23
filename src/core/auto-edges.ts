@@ -74,7 +74,7 @@ export function autoGenerateEdges(
     if (!nodesByType.has(type)) {
       nodesByType.set(type, [])
     }
-    nodesByType.get(type)!.push(node)
+    const typeNodes = nodesByType.get(type); if (typeNodes) typeNodes.push(node)
   }
 
   // Apply each rule

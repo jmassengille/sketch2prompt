@@ -20,13 +20,13 @@ export function FirstLaunchOverlay({
   // Staged reveal animation
   useEffect(() => {
     const timers = [
-      setTimeout(() => setIsVisible(true), 50),
-      setTimeout(() => setStage(1), 200),
-      setTimeout(() => setStage(2), 400),
-      setTimeout(() => setStage(3), 600),
-      setTimeout(() => setStage(4), 800),
+      setTimeout(() => { setIsVisible(true); }, 50),
+      setTimeout(() => { setStage(1); }, 200),
+      setTimeout(() => { setStage(2); }, 400),
+      setTimeout(() => { setStage(3); }, 600),
+      setTimeout(() => { setStage(4); }, 800),
     ]
-    return () => timers.forEach(clearTimeout)
+    return () => { timers.forEach(clearTimeout); }
   }, [])
 
   const handleDismiss = useCallback(() => {
@@ -44,7 +44,7 @@ export function FirstLaunchOverlay({
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => { window.removeEventListener('keydown', handleKeyDown); }
   }, [handleDismiss])
 
   const tips = [
@@ -179,7 +179,7 @@ export function FirstLaunchOverlay({
             ? 'opacity-100 translate-y-0 scale-100'
             : 'opacity-0 translate-y-8 scale-95'
         )}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); }}
       >
         {/* Card glow effect */}
         <div

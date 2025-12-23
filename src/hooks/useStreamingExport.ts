@@ -1,10 +1,9 @@
 /**
  * Hook for managing streaming AI export state
  *
- * Provides state management for streaming generation with token batching
- * to prevent excessive re-renders during high-frequency token events.
+ * Provides state management for file-level streaming generation.
  */
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import type {
   StreamingProgress,
   StreamingFileState,
@@ -34,9 +33,6 @@ interface UseStreamingExportReturn extends StreamingExportState {
   getMergedFiles: (initialFiles: PreviewFile[]) => PreviewFile[]
 }
 
-/** Flush interval for token batching (ms) */
-const TOKEN_FLUSH_INTERVAL = 50
-
 export function useStreamingExport(): UseStreamingExportReturn {
   const [state, setState] = useState<StreamingExportState>({
     isStreaming: false,
@@ -45,55 +41,10 @@ export function useStreamingExport(): UseStreamingExportReturn {
     error: null,
   })
 
-  // Use refs for mutable token buffer to avoid re-renders on every token
-  const tokenBufferRef = useRef<Map<string, string>>(new Map())
-  const flushTimeoutRef = useRef<number | null>(null)
-
-  // Flush accumulated tokens to state
-  const flushTokens = useCallback(() => {
-    if (tokenBufferRef.current.size === 0) return
-
-    setState((prev) => {
-      const updated = new Map(prev.streamingFiles)
-      for (const [fileName, tokens] of tokenBufferRef.current) {
-        const existing = updated.get(fileName)
-        if (existing) {
-          updated.set(fileName, {
-            ...existing,
-            content: existing.content + tokens,
-          })
-        }
-      }
-      return { ...prev, streamingFiles: updated }
-    })
-
-    tokenBufferRef.current.clear()
-    flushTimeoutRef.current = null
-  }, [])
-
-  // Schedule token flush with debounce
-  const scheduleFlush = useCallback(() => {
-    if (flushTimeoutRef.current === null) {
-      flushTimeoutRef.current = window.setTimeout(flushTokens, TOKEN_FLUSH_INTERVAL)
-    }
-  }, [flushTokens])
-
   // Streaming callbacks
   const callbacks = useMemo<StreamingCallbacks>(
     () => ({
-      onToken: (fileName, token) => {
-        const current = tokenBufferRef.current.get(fileName) ?? ''
-        tokenBufferRef.current.set(fileName, current + token)
-        scheduleFlush()
-      },
-
       onFileStart: (fileName) => {
-        // Flush any pending tokens first
-        if (flushTimeoutRef.current) {
-          clearTimeout(flushTimeoutRef.current)
-          flushTokens()
-        }
-
         setState((prev) => ({
           ...prev,
           streamingFiles: new Map(prev.streamingFiles).set(fileName, {
@@ -106,9 +57,6 @@ export function useStreamingExport(): UseStreamingExportReturn {
       },
 
       onFileComplete: (fileName, content) => {
-        // Clear any buffered tokens for this file
-        tokenBufferRef.current.delete(fileName)
-
         setState((prev) => {
           const updated = new Map(prev.streamingFiles)
           updated.set(fileName, {
@@ -126,12 +74,6 @@ export function useStreamingExport(): UseStreamingExportReturn {
       },
 
       onError: (error) => {
-        // Clear any pending flush
-        if (flushTimeoutRef.current) {
-          clearTimeout(flushTimeoutRef.current)
-          flushTimeoutRef.current = null
-        }
-
         setState((prev) => ({
           ...prev,
           isStreaming: false,
@@ -142,17 +84,10 @@ export function useStreamingExport(): UseStreamingExportReturn {
         }))
       },
     }),
-    [flushTokens, scheduleFlush]
+    []
   )
 
   const startStreaming = useCallback(() => {
-    // Clear any pending flush
-    if (flushTimeoutRef.current) {
-      clearTimeout(flushTimeoutRef.current)
-      flushTimeoutRef.current = null
-    }
-    tokenBufferRef.current.clear()
-
     setState({
       isStreaming: true,
       progress: {
@@ -167,14 +102,8 @@ export function useStreamingExport(): UseStreamingExportReturn {
   }, [])
 
   const stopStreaming = useCallback(() => {
-    // Flush any remaining tokens
-    if (flushTimeoutRef.current) {
-      clearTimeout(flushTimeoutRef.current)
-      flushTokens()
-    }
-
     setState((prev) => ({ ...prev, isStreaming: false }))
-  }, [flushTokens])
+  }, [])
 
   // Merge streaming files with initial template files
   const getMergedFiles = useCallback(

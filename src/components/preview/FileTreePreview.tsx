@@ -90,7 +90,7 @@ function FileEntry({
       open={shouldBeOpen}
       style={{
         borderBottom: '1px solid var(--color-workshop-border)',
-        animationDelay: `${index * 50}ms`,
+        animationDelay: `${String(index * 50)}ms`,
       }}
     >
       {/* Streaming highlight border */}

@@ -29,6 +29,8 @@ export function generateArchitectureConstraints(nodes: DiagramNode[]): string {
     'Store secrets in code or version control',
     'Trust client-side validation alone (always re-validate server-side)',
     'Expose internal error details to clients (log internally, return safe messages)',
+    'Add enterprise patterns without explicit user request (message queues, microservices, CQRS)',
+    'Install dependencies without checking if stdlib or existing deps solve the problem',
   ]
 
   // Add type-specific never statements
@@ -40,10 +42,12 @@ export function generateArchitectureConstraints(nodes: DiagramNode[]): string {
   }
 
   const prefer = [
+    'Simplicity over abstraction — delay complexity until scaling demands it',
     'Composition over inheritance — easier to test and modify',
     'Named exports over default exports — better refactoring support',
     'Early returns over nested conditionals — clearer control flow',
     'Explicit dependencies over global imports — aids testing',
+    'Three similar lines over one premature helper — wait for patterns to emerge',
   ]
 
   return `## Architecture Constraints
