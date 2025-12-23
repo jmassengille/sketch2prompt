@@ -21,7 +21,7 @@ import {
   exportBlueprint,
   downloadBlob,
 } from '../core/export-blueprint'
-import type { DiagramNode, DiagramEdge, NodeType } from '../core/types'
+import type { DiagramNode, DiagramEdge, NodeType, NodeMeta } from '../core/types'
 import { BlueprintPreviewModal } from './preview'
 import { usePreviewContent } from '../hooks/usePreviewContent'
 import { useExportProgress } from '../hooks/useExportProgress'
@@ -213,23 +213,16 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
 
       if (result.ok) {
         // Convert validated data back to React Flow nodes/edges
-        const importedNodes: DiagramNode[] = result.data.nodes.map((n) => {
-          const node: DiagramNode = {
-            id: n.id,
-            type: n.type as NodeType,
-            position: n.position,
-            data: {
-              label: n.data.label,
-              type: n.data.type as NodeType,
-              meta: {},
-            },
-          }
-          // Only set description if defined
-          if (n.data.meta.description !== undefined) {
-            node.data.meta.description = n.data.meta.description
-          }
-          return node
-        })
+        const importedNodes: DiagramNode[] = result.data.nodes.map((n) => ({
+          id: n.id,
+          type: n.type as NodeType,
+          position: n.position,
+          data: {
+            label: n.data.label,
+            type: n.data.type as NodeType,
+            meta: n.data.meta as NodeMeta,
+          },
+        }))
         setNodes(importedNodes)
 
         const importedEdges: DiagramEdge[] = result.data.edges.map((e) => {
