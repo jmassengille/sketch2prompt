@@ -112,7 +112,7 @@ export function buildComponentSpecPrompt(
   const verifiedPackages = buildVerifiedPackageInfo(node.data.meta.techStack)
   const verifiedReferences = buildVerifiedReferences(node.data.meta.techStack)
 
-  return `You are generating a component specification YAML file for an AI coding assistant.
+  return `You are generating a component specification in Markdown + XML format for an AI coding assistant.
 
 COMPONENT DETAILS:
 - Name: ${node.data.label}
@@ -129,48 +129,46 @@ CONNECTIONS:
 ${connectionsList}
 
 YOUR TASK:
-Generate a complete component spec in YAML format following the schema for type "${node.data.type}".
+Generate a component spec in Markdown format with XML tags for semantic parsing.
 
-REQUIRED FIELDS (all specs):
-- spec_version: "1.0"
-- component_id: "${node.id}"
-- name: "${node.data.label}"
-- type: "${node.data.type}"
-- description: |
-    (2-3 sentence description based on the component name and type)
-- responsibilities: (3-5 core responsibilities as bullet points)
-- anti_responsibilities: (3-5 strings using format: "NEVER [action] — [reason]")
+OUTPUT FORMAT (follow exactly):
+<spec component="${node.data.label}" type="${node.data.type}" id="${node.id}">
 
-INTEGRATION_POINTS (for each connected component):
-- component: (name of connected component)
-- direction: "inbound" | "outbound" | "bidirectional"
-- purpose: (why this integration exists)
-- contract:
-    request: (request shape, e.g., "{ userId: string }")
-    response: (response shape, e.g., "{ user: User }")
+## Tech Stack
+${techStack}
 
-TECH_STACK:
-- primary: "${techStack}"
-- baseline_deps: (USE THE VERIFIED PACKAGES ABOVE - do NOT invent versions)
-- references: (USE THE VERIFIED REFERENCES ABOVE - do NOT invent URLs)
+## Description
+(2-3 sentences based on component name and type)
 
-VALIDATION SECTION (required):
-- exit_criteria: (list of completion criteria, must include "Status file updated with component completion")
-- smoke_tests: (minimal verification steps)
-- integration_checks: (based on integration_points)
+## Responsibilities
+- (3-5 core responsibilities as bullet points)
 
-TYPE-SPECIFIC FIELDS for "${node.data.type}":
+## Anti-Responsibilities
+- NEVER [action] — [reason]
+- (3-5 total, use this exact format)
+
+## Integrates With
+- [Component Name] (direction) via [Pattern]
+(Based on connections above)
+
+## Dependencies
+| Package | Version | Purpose |
+|---------|---------|---------|
+(USE VERIFIED PACKAGES ABOVE - do NOT invent versions)
+
 ${getTypeSpecificFieldsPrompt(node.data.type)}
 
-IMPORTANT INSTRUCTIONS:
-- Output ONLY valid YAML with NO markdown code fences, NO explanations
-- Be specific and realistic based on the component name "${node.data.label}"
+## Validation
+- [ ] (completion criteria based on component type)
+- [ ] STATUS.md updated
+
+</spec>
+
+CRITICAL INSTRUCTIONS:
+- Output ONLY the Markdown content, NO code fences, NO explanations
+- Start directly with: <spec component=
+- Use VERIFIED PACKAGES with exact versions - do NOT invent versions
 - Anti-responsibilities MUST use format: "NEVER [action] — [reason]"
-- CRITICAL: Use the VERIFIED PACKAGES with exact versions provided above. Do NOT make up versions!
-- CRITICAL: Use the VERIFIED REFERENCES with exact URLs provided above. Do NOT make up URLs!
-- References are simple strings, NOT objects
-- Validation section is required with exit_criteria, smoke_tests, and integration_checks
-- Keep token count reasonable (~400-700 tokens)
-- Use proper YAML syntax with correct indentation (2 spaces)
-- Start directly with: spec_version: "1.0"`
+- Keep token count under 400 tokens
+- Close with </spec>`
 }

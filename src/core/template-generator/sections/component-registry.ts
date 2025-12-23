@@ -15,7 +15,7 @@ No components defined yet.`
 
   const tableRows = nodes.map((node) => {
     const filename = node.data.label.toLowerCase().replace(/\s+/g, '-')
-    return `| ${node.id} | ${node.data.label} | ${node.data.type} | \`specs/${filename}.yaml\` | active |`
+    return `| ${node.id} | ${node.data.label} | ${node.data.type} | \`specs/${filename}.md\` | active |`
   })
 
   return `## Component Registry

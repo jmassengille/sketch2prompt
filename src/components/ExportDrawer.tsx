@@ -512,7 +512,7 @@ export function ExportDrawer({ isOpen, onClose }: ExportDrawerProps) {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-blue-500">•</span>
-                    specs/*.yaml ({nodeCount} component spec
+                    specs/*.md ({nodeCount} component spec
                     {nodeCount !== 1 ? 's' : ''})
                   </li>
                   <li className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateProjectRulesTemplate, generateComponentYamlTemplate } from './template-generator'
+import { generateProjectRulesTemplate, generateComponentSpecMarkdown } from './template-generator'
 import type { DiagramNode, DiagramEdge } from './types'
 
 describe('generateProjectRulesTemplate', () => {
@@ -47,8 +47,8 @@ describe('generateProjectRulesTemplate', () => {
     expect(result).toContain('REST API')
     expect(result).toContain('frontend')
     expect(result).toContain('backend')
-    expect(result).toContain('specs/react-dashboard.yaml')
-    expect(result).toContain('specs/rest-api.yaml')
+    expect(result).toContain('specs/react-dashboard.md')
+    expect(result).toContain('specs/rest-api.md')
   })
 
   it('generates proper build order based on node types', () => {
@@ -126,142 +126,7 @@ describe('generateProjectRulesTemplate', () => {
     expect(result).toContain('Fetches data')
   })
 
-  it('includes AI markers for elaboration', () => {
-    const result = generateProjectRulesTemplate([], [], 'Test')
-
-    expect(result).toContain('# AI:')
-  })
-})
-
-describe('generateComponentYamlTemplate', () => {
-  it('generates valid YAML for frontend component', () => {
-    const node: DiagramNode = {
-      id: 'node-1',
-      type: 'frontend',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'React Dashboard',
-        type: 'frontend',
-        meta: {},
-      },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    expect(result).toContain('spec_version: "1.0"')
-    expect(result).toContain('component_id: node-1')
-    expect(result).toContain('name: React Dashboard')
-    expect(result).toContain('type: frontend')
-    expect(result).toContain('responsibilities:')
-    expect(result).toContain('anti_responsibilities:')
-    expect(result).toContain('tech_stack:')
-    expect(result).toContain('routing_strategy:')
-    expect(result).toContain('state_management:')
-    expect(result).toContain('accessibility:')
-  })
-
-  it('generates valid YAML for backend component', () => {
-    const node: DiagramNode = {
-      id: 'node-2',
-      type: 'backend',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'REST API',
-        type: 'backend',
-        meta: { description: 'Main API server' },
-      },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    expect(result).toContain('component_id: node-2')
-    expect(result).toContain('name: REST API')
-    expect(result).toContain('type: backend')
-    expect(result).toContain('Main API server')
-    expect(result).toContain('api_style:')
-    expect(result).toContain('endpoint_patterns:')
-    expect(result).toContain('error_handling:')
-  })
-
-  it('generates valid YAML for storage component', () => {
-    const node: DiagramNode = {
-      id: 'node-3',
-      type: 'storage',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'PostgreSQL',
-        type: 'storage',
-        meta: {},
-      },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    expect(result).toContain('type: storage')
-    expect(result).toContain('schema_notes:')
-    expect(result).toContain('backup_strategy:')
-    expect(result).toContain('indexing_strategy:')
-  })
-
-  it('generates valid YAML for auth component', () => {
-    const node: DiagramNode = {
-      id: 'node-4',
-      type: 'auth',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'Auth Service',
-        type: 'auth',
-        meta: {},
-      },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    expect(result).toContain('type: auth')
-    expect(result).toContain('auth_strategy:')
-    expect(result).toContain('security_notes:')
-    expect(result).toContain('providers:')
-  })
-
-  it('generates valid YAML for external component', () => {
-    const node: DiagramNode = {
-      id: 'node-5',
-      type: 'external',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'Stripe',
-        type: 'external',
-        meta: {},
-      },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    expect(result).toContain('type: external')
-    expect(result).toContain('service_details:')
-    expect(result).toContain('rate_limits:')
-  })
-
-  it('generates valid YAML for background component', () => {
-    const node: DiagramNode = {
-      id: 'node-6',
-      type: 'background',
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'Email Worker',
-        type: 'background',
-        meta: {},
-      },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    expect(result).toContain('type: background')
-    expect(result).toContain('job_queue:')
-    expect(result).toContain('jobs:')
-  })
-
-  it('includes integration points from edges', () => {
+  it('derives integration rules from types when no edges', () => {
     const nodes: DiagramNode[] = [
       {
         id: 'node-1',
@@ -277,26 +142,154 @@ describe('generateComponentYamlTemplate', () => {
       },
     ]
 
-    const edges: DiagramEdge[] = [
+    const result = generateProjectRulesTemplate(nodes, [], 'Test')
+
+    expect(result).toContain('Frontend')
+    expect(result).toContain('Backend')
+    expect(result).toContain('HTTP REST/GraphQL')
+    expect(result).toContain('Inferred from types')
+  })
+})
+
+describe('generateComponentSpecMarkdown', () => {
+  it('generates valid Markdown with XML tags for frontend component', () => {
+    const node: DiagramNode = {
+      id: 'node-1',
+      type: 'frontend',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'React Dashboard',
+        type: 'frontend',
+        meta: {},
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('<spec component="React Dashboard" type="frontend" id="node-1">')
+    expect(result).toContain('</spec>')
+    expect(result).toContain('## Tech Stack')
+    expect(result).toContain('## Responsibilities')
+    expect(result).toContain('## Anti-Responsibilities')
+    expect(result).toContain('## Frontend Notes')
+    expect(result).toContain('## Validation')
+  })
+
+  it('generates valid Markdown for backend component', () => {
+    const node: DiagramNode = {
+      id: 'node-2',
+      type: 'backend',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'REST API',
+        type: 'backend',
+        meta: { description: 'Main API server' },
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('<spec component="REST API" type="backend" id="node-2">')
+    expect(result).toContain('Main API server')
+    expect(result).toContain('## API Notes')
+  })
+
+  it('generates valid Markdown for storage component', () => {
+    const node: DiagramNode = {
+      id: 'node-3',
+      type: 'storage',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'PostgreSQL',
+        type: 'storage',
+        meta: {},
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('type="storage"')
+    expect(result).toContain('## Storage Notes')
+  })
+
+  it('generates valid Markdown for auth component', () => {
+    const node: DiagramNode = {
+      id: 'node-4',
+      type: 'auth',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Auth Service',
+        type: 'auth',
+        meta: {},
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('type="auth"')
+    expect(result).toContain('## Auth Notes')
+  })
+
+  it('generates valid Markdown for external component', () => {
+    const node: DiagramNode = {
+      id: 'node-5',
+      type: 'external',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Stripe',
+        type: 'external',
+        meta: {},
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('type="external"')
+    expect(result).toContain('## External Service Notes')
+  })
+
+  it('generates valid Markdown for background component', () => {
+    const node: DiagramNode = {
+      id: 'node-6',
+      type: 'background',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Email Worker',
+        type: 'background',
+        meta: {},
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('type="background"')
+    expect(result).toContain('## Job Notes')
+  })
+
+  it('includes type-based integrations', () => {
+    const nodes: DiagramNode[] = [
       {
-        id: 'edge-1',
-        source: 'node-1',
-        target: 'node-2',
-        data: { label: 'Fetches data via REST' },
+        id: 'node-1',
+        type: 'frontend',
+        position: { x: 0, y: 0 },
+        data: { label: 'Frontend', type: 'frontend', meta: {} },
+      },
+      {
+        id: 'node-2',
+        type: 'backend',
+        position: { x: 100, y: 100 },
+        data: { label: 'Backend', type: 'backend', meta: {} },
       },
     ]
 
     const frontendNode = nodes[0]
     if (!frontendNode) throw new Error('Test setup error: missing node')
-    const result = generateComponentYamlTemplate(frontendNode, edges, nodes)
+    const result = generateComponentSpecMarkdown(frontendNode, nodes)
 
-    expect(result).toContain('integration_points:')
-    expect(result).toContain('component: Backend')
-    expect(result).toContain('direction: outbound')
-    expect(result).toContain('purpose: Fetches data via REST')
-    expect(result).toContain('contract:')
-    expect(result).toContain('request:')
-    expect(result).toContain('response:')
+    expect(result).toContain('## Integrates With')
+    expect(result).toContain('Backend')
+    expect(result).toContain('outbound')
+    expect(result).toContain('HTTP REST/GraphQL')
   })
 
   it('includes type-specific default responsibilities', () => {
@@ -307,7 +300,7 @@ describe('generateComponentYamlTemplate', () => {
       data: { label: 'API', type: 'backend', meta: {} },
     }
 
-    const result = generateComponentYamlTemplate(node, [], [node])
+    const result = generateComponentSpecMarkdown(node, [node])
 
     expect(result).toContain('Validate all incoming request payloads')
     expect(result).toContain('Enforce authentication and authorization rules')
@@ -321,28 +314,12 @@ describe('generateComponentYamlTemplate', () => {
       data: { label: 'API', type: 'backend', meta: {} },
     }
 
-    const result = generateComponentYamlTemplate(node, [], [node])
+    const result = generateComponentSpecMarkdown(node, [node])
 
-    // Anti-responsibilities are now strings in format "pattern — reason"
-    expect(result).toContain('anti_responsibilities:')
+    expect(result).toContain('## Anti-Responsibilities')
     expect(result).toContain('NEVER')
     expect(result).toContain('—') // em dash separator
-    // Check for actual backend anti-responsibility content
     expect(result).toContain('trust client-provided data without validation')
-  })
-
-  it('does not include constraints field', () => {
-    const node: DiagramNode = {
-      id: 'node-1',
-      type: 'backend',
-      position: { x: 0, y: 0 },
-      data: { label: 'API', type: 'backend', meta: {} },
-    }
-
-    const result = generateComponentYamlTemplate(node, [], [node])
-
-    // Constraints field should not exist in new format
-    expect(result).not.toContain('constraints:')
   })
 
   it('includes validation section', () => {
@@ -353,15 +330,14 @@ describe('generateComponentYamlTemplate', () => {
       data: { label: 'API', type: 'backend', meta: {} },
     }
 
-    const result = generateComponentYamlTemplate(node, [], [node])
+    const result = generateComponentSpecMarkdown(node, [node])
 
-    expect(result).toContain('validation:')
-    expect(result).toContain('exit_criteria:')
-    expect(result).toContain('smoke_tests:')
-    expect(result).toContain('integration_checks:')
+    expect(result).toContain('## Validation')
+    expect(result).toContain('- [ ]')
+    expect(result).toContain('STATUS.md updated')
   })
 
-  it('includes AI markers for elaboration', () => {
+  it('uses TBD for unspecified tech stack', () => {
     const node: DiagramNode = {
       id: 'node-1',
       type: 'frontend',
@@ -369,9 +345,9 @@ describe('generateComponentYamlTemplate', () => {
       data: { label: 'UI', type: 'frontend', meta: {} },
     }
 
-    const result = generateComponentYamlTemplate(node, [], [node])
+    const result = generateComponentSpecMarkdown(node, [node])
 
-    expect(result).toContain('# AI:')
+    expect(result).toContain('TBD')
   })
 
   it('uses node description when provided', () => {
@@ -386,8 +362,45 @@ describe('generateComponentYamlTemplate', () => {
       },
     }
 
-    const result = generateComponentYamlTemplate(node, [], [node])
+    const result = generateComponentSpecMarkdown(node, [node])
 
     expect(result).toContain('Custom API description for testing')
+  })
+
+  it('includes tech stack when specified', () => {
+    const node: DiagramNode = {
+      id: 'node-1',
+      type: 'frontend',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Web App',
+        type: 'frontend',
+        meta: { techStack: ['React', 'TypeScript'] },
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    expect(result).toContain('React, TypeScript')
+    expect(result).toContain('## Dependencies')
+  })
+
+  it('outputs concise format under 400 tokens', () => {
+    const node: DiagramNode = {
+      id: 'node-1',
+      type: 'backend',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'API',
+        type: 'backend',
+        meta: { techStack: ['Python', 'FastAPI'] },
+      },
+    }
+
+    const result = generateComponentSpecMarkdown(node, [node])
+
+    // Rough token estimate: 1 token ≈ 4 chars for code
+    const estimatedTokens = result.length / 4
+    expect(estimatedTokens).toBeLessThan(500) // Some buffer
   })
 })

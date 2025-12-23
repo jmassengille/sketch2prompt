@@ -38,7 +38,7 @@ export function generateProjectRulesTemplate(
   return `# ${projectName} - System Rules
 
 > **Load this file FIRST** before any component specs.
-> Component specs in \`specs/*.yaml\` extend these rules.
+> Component specs in \`specs/*.md\` extend these rules.
 
 ${systemOverview}
 

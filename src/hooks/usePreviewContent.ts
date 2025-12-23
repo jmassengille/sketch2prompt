@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import {
   generateProjectRulesTemplate,
   generateAgentProtocolTemplate,
-  generateComponentYamlTemplate,
+  generateComponentSpecMarkdown,
   generateStartMd,
   generateReadme,
 } from '../core/template-generator'
@@ -65,15 +65,15 @@ export function usePreviewContent(
       description: 'Workflow phases, code standards, and implementation guidance',
     })
 
-    // 4. specs/*.yaml (sorted alphabetically by filename)
+    // 4. specs/*.md (sorted alphabetically by filename)
     const specFiles: PreviewFile[] = nodes.map((node) => {
       const slug = slugify(node.data.label)
-      const filename = `specs/${slug}.yaml`
-      const content = generateComponentYamlTemplate(node, edges, nodes)
+      const filename = `specs/${slug}.md`
+      const content = generateComponentSpecMarkdown(node, nodes)
       return {
         name: filename,
         content,
-        language: 'yaml' as const,
+        language: 'markdown' as const,
         size: getByteSize(content),
         description: `${node.data.type} component: responsibilities, integrations, validation`,
       }

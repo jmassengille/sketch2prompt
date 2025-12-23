@@ -8,9 +8,9 @@ vi.mock('./template-generator', () => ({
     (_nodes, _edges, projectName: string) =>
       `# ${projectName} - System Rules\n\nGenerated project rules.`
   ),
-  generateComponentYamlTemplate: vi.fn(
+  generateComponentSpecMarkdown: vi.fn(
     (node: DiagramNode) =>
-      `spec_version: "1.0"\nname: "${node.data.label}"\ntype: "${node.data.type}"`
+      `<spec component="${node.data.label}" type="${node.data.type}" id="${node.id}">\n\n## Tech Stack\nTBD\n\n</spec>`
   ),
   generateAgentProtocolTemplate: vi.fn(
     (_nodes: DiagramNode[], projectName: string) =>

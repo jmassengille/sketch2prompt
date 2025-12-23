@@ -1,45 +1,44 @@
 import type { NodeType } from '../../types'
 
 /**
- * Get type-specific field guidance for component spec prompts
+ * Get type-specific field guidance for component spec prompts (Markdown format)
  */
 export function getTypeSpecificFieldsPrompt(nodeType: NodeType): string {
   switch (nodeType) {
     case 'frontend':
-      return `- routing_strategy: (description of routing approach)
-- state_management: (state management approach)
-- accessibility: (list of accessibility requirements)
-- ui_patterns: (list of UI patterns with name and usage)`
+      return `## Frontend Notes
+- Routing: (approach)
+- State: (management approach)
+- A11y: WCAG 2.1 AA`
 
     case 'backend':
-      return `- api_style: "REST|GraphQL|gRPC|tRPC"
-- endpoint_patterns: (list of URL patterns with methods and auth)
-- error_handling: (standard error response format)`
+      return `## API Notes
+- Style: REST (or specify)
+- Auth: (middleware approach)
+- Errors: \`{ error, code }\``
 
     case 'storage':
-      return `- schema_notes: (key entities and relationships)
-- backup_strategy: (backup approach)
-- indexing_strategy: (guidelines for indexes)`
+      return `## Storage Notes
+- Schema: (key entities)
+- Indexes: (based on queries)`
 
     case 'auth':
-      return `- auth_strategy: "JWT|Session|OAuth2|API_Key"
-- security_notes: (authentication/authorization approach)
-- providers: (if using OAuth, list providers with scopes)`
+      return `## Auth Notes
+- Strategy: JWT/Session/OAuth2
+- Expiry: (token TTL)`
 
     case 'external':
-      return `- service_details:
-    provider: (service name)
-    api_version: (version)
-    environment: (dev/staging/prod notes)
-- error_handling: (how to handle failures)
-- rate_limits: (limit descriptions)`
+      return `## Service Notes
+- Provider: (name)
+- Rate Limits: (limits)`
 
     case 'background':
-      return `- job_queue: (queue technology)
-- jobs: (list of jobs with name, trigger, frequency, retry_policy)`
+      return `## Job Notes
+- Queue: (technology)
+- Retry: (policy)`
 
     default:
-      return '(No type-specific fields for this type)'
+      return ''
   }
 }
 

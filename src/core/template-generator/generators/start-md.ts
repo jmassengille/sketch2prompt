@@ -68,7 +68,7 @@ READ THESE FILES NOW (in order):
 1. \`PROJECT_RULES.md\` — System constitution, architecture constraints, build order
 2. \`AGENT_PROTOCOL.md\` — Workflow rules, code standards, library policy
 
-Do NOT load \`specs/*.yaml\` yet. Component specs are loaded only when actively implementing that component.
+Do NOT load \`specs/*.md\` yet. Component specs are loaded only when actively implementing that component.
 
 ---
 

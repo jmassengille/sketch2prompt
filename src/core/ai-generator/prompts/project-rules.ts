@@ -52,7 +52,7 @@ function buildComponentRegistry(nodes: DiagramNode[]): string {
   return nodes
     .map(
       (node) =>
-        `| ${node.id} | ${node.data.label} | ${node.data.type} | \`specs/${slugify(node.data.label)}.yaml\` | active |`
+        `| ${node.id} | ${node.data.label} | ${node.data.type} | \`specs/${slugify(node.data.label)}.md\` | active |`
     )
     .join('\n')
 }

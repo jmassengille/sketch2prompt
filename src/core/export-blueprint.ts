@@ -44,7 +44,7 @@ const MAX_FREE_NODES = 8
  * - START.md (bootstrap - read first, confirms setup, generates IDE config)
  * - PROJECT_RULES.md (system constitution)
  * - AGENT_PROTOCOL.md (workflow guidance)
- * - specs/*.yaml (per-component specs)
+ * - specs/*.md (per-component specs in Markdown + XML format)
  * - diagram.json (re-import capability)
  */
 export async function exportBlueprint(
@@ -88,15 +88,15 @@ export async function exportBlueprint(
         componentSpecs.set(nodeId, yaml)
       }
     } else {
-      // Template-based generation
-      const { generateProjectRulesTemplate, generateComponentYamlTemplate, generateAgentProtocolTemplate } = await import(
+      // Template-based generation (Markdown + XML format)
+      const { generateProjectRulesTemplate, generateComponentSpecMarkdown, generateAgentProtocolTemplate } = await import(
         './template-generator'
       )
       projectRules = generateProjectRulesTemplate(nodes, edges, options.projectName)
       agentProtocol = generateAgentProtocolTemplate(nodes, options.projectName, options.outOfScope ?? [])
       for (const node of nodes) {
-        const yaml = generateComponentYamlTemplate(node, edges, nodes)
-        componentSpecs.set(node.id, yaml)
+        const markdown = generateComponentSpecMarkdown(node, nodes)
+        componentSpecs.set(node.id, markdown)
       }
     }
 
@@ -120,13 +120,13 @@ export async function exportBlueprint(
     // Add AGENT_PROTOCOL.md
     zip.file('AGENT_PROTOCOL.md', agentProtocol)
 
-    // Add specs folder with component YAMLs
+    // Add specs folder with component specs (Markdown format)
     const specsFolder = zip.folder('specs')
     if (specsFolder) {
       for (const node of nodes) {
-        const yaml = componentSpecs.get(node.id) ?? ''
-        const filename = slugify(node.data.label) + '.yaml'
-        specsFolder.file(filename, yaml)
+        const spec = componentSpecs.get(node.id) ?? ''
+        const filename = slugify(node.data.label) + '.md'
+        specsFolder.file(filename, spec)
       }
     }
 

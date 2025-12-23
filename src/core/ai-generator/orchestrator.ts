@@ -87,7 +87,7 @@ export async function generateWithAI(
   )
 
   const componentPromises = nodes.map((node) => {
-    const fileName = `specs/${slugify(node.data.label)}.yaml`
+    const fileName = `specs/${slugify(node.data.label)}.md`
     return limit(() =>
       callAI(
         client,
@@ -97,7 +97,7 @@ export async function generateWithAI(
         signal
       ).then((content) => {
         onFileComplete?.(fileName, content)
-        return { nodeId: node.id, yaml: content }
+        return { nodeId: node.id, markdown: content }
       })
     )
   })
@@ -111,7 +111,7 @@ export async function generateWithAI(
     ])
 
     const componentSpecs = new Map(
-      componentResults.map((r) => [r.nodeId, r.yaml])
+      componentResults.map((r) => [r.nodeId, r.markdown])
     )
 
     return { projectRules, agentProtocol, componentSpecs }
