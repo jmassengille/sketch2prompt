@@ -31,4 +31,4 @@ Thanks for your interest in contributing.
 
 ## Questions?
 
-Open an issue. We'll respond.
+Open an issue. I will respond.
