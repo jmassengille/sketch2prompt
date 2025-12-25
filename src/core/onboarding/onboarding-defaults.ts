@@ -554,13 +554,4 @@ export const OUT_OF_SCOPE_CONFIGS: OutOfScopeConfig[] = [
     inclusionWarning: 'Consider polling or server-sent events before WebSockets.',
     defaultExcluded: true,
   },
-  {
-    id: OUT_OF_SCOPE_ITEMS.mobileApp,
-    label: 'Mobile App',
-    description: 'Native iOS/Android applications',
-    rationale:
-      'Building for web, mobile, and backend simultaneously fragments focus. Ship on one platform first, validate demand, then expand.',
-    inclusionWarning: 'Focus on web-first. Mobile web works on phones.',
-    defaultExcluded: true,
-  },
 ] satisfies OutOfScopeConfig[]

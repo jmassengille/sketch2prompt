@@ -93,7 +93,6 @@ export const OUT_OF_SCOPE_ITEMS = {
   multiTenancy: 'multi-tenancy',
   horizontalScaling: 'horizontal-scaling',
   realtime: 'realtime',
-  mobileApp: 'mobile-app',
 } as const
 
 export type OutOfScopeId = (typeof OUT_OF_SCOPE_ITEMS)[keyof typeof OUT_OF_SCOPE_ITEMS]
