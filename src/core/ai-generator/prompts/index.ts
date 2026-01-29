@@ -1,3 +1,8 @@
-export { buildProjectRulesPrompt } from './project-rules'
-export { buildComponentSpecPrompt } from './component-spec'
-export { buildAgentProtocolPrompt } from './agent-protocol'
+// Snippet prompt builders (for isolated prose generation)
+export {
+  buildProjectDescriptionPrompt,
+  buildBoundaryAdditionsPrompt,
+  buildComponentDescriptionPrompt,
+  buildComponentResponsibilitiesPrompt,
+  buildAntiResponsibilitiesPrompt,
+} from './snippets'

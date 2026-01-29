@@ -1,29 +1,23 @@
 /**
  * AI Generation Orchestrator
  *
- * Coordinates parallel AI generation for blueprint files.
- * Uses p-limit for controlled concurrency to avoid API rate limits.
+ * Two-phase architecture:
+ * 1. Generate AI snippets (parallel, small token calls)
+ * 2. Assemble documents deterministically (no AI involved)
+ *
+ * This approach reduces hallucination surface area by keeping
+ * structural content (package versions, tables, lists) 100% deterministic.
  */
-import pLimit from 'p-limit'
 import type { DiagramNode, DiagramEdge } from '../types'
+import type { OutOfScopeId } from '../onboarding'
 import type { AIProvider, GenerationResult } from './types'
-import { createClient, callAI } from './client'
+import { generateSnippets } from './snippet-orchestrator'
 import {
-  buildProjectRulesPrompt,
-  buildComponentSpecPrompt,
-  buildAgentProtocolPrompt,
-} from './prompts'
+  assembleProjectRules,
+  assembleAgentProtocol,
+  assembleComponentSpec,
+} from './assembler'
 import { slugify } from '../utils/slugify'
-
-/**
- * Maximum concurrent API calls.
- * Set conservatively to avoid rate limits across API tiers.
- * - OpenAI Tier 1: 500 RPM, Tier 2: 5000 RPM
- * - Anthropic: Varies by tier, typically 60-4000 RPM
- * A value of 3 is safe for most users while still providing
- * meaningful parallelism over sequential execution.
- */
-const MAX_CONCURRENCY = 3
 
 export interface GenerateOptions {
   nodes: DiagramNode[]
@@ -32,14 +26,16 @@ export interface GenerateOptions {
   apiKey: string
   provider: AIProvider
   modelId: string
+  outOfScope?: OutOfScopeId[]
   signal?: AbortSignal | undefined
   onFileComplete?: ((fileName: string, content: string) => void) | undefined
 }
 
 /**
  * Generate AI-powered project documentation from diagram.
- * Files are generated with controlled concurrency (max 3 at a time)
- * to avoid API rate limits while maintaining good throughput.
+ *
+ * Phase 1: Generates small AI snippets in parallel (~50-100 tokens each)
+ * Phase 2: Assembles final documents deterministically using snippets
  */
 export async function generateWithAI(
   options: GenerateOptions
@@ -51,79 +47,48 @@ export async function generateWithAI(
     apiKey,
     provider,
     modelId,
+    outOfScope = [],
     signal,
     onFileComplete,
   } = options
 
-  const client = createClient(apiKey, provider)
-  const limit = pLimit(MAX_CONCURRENCY)
-
-  // Wrap all API calls with concurrency limiter
-  // p-limit queues calls and executes up to MAX_CONCURRENCY at a time
-  const projectRulesPromise = limit(() =>
-    callAI(
-      client,
-      buildProjectRulesPrompt(nodes, edges, projectName),
-      modelId,
-      'PROJECT_RULES.md',
-      signal
-    ).then((content) => {
-      onFileComplete?.('PROJECT_RULES.md', content)
-      return content
-    })
-  )
-
-  const agentProtocolPromise = limit(() =>
-    callAI(
-      client,
-      buildAgentProtocolPrompt(nodes, projectName),
-      modelId,
-      'AGENT_PROTOCOL.md',
-      signal
-    ).then((content) => {
-      onFileComplete?.('AGENT_PROTOCOL.md', content)
-      return content
-    })
-  )
-
-  const componentPromises = nodes.map((node) => {
-    const fileName = `specs/${slugify(node.data.label)}.md`
-    return limit(() =>
-      callAI(
-        client,
-        buildComponentSpecPrompt(node, nodes, edges),
-        modelId,
-        fileName,
-        signal
-      ).then((content) => {
-        onFileComplete?.(fileName, content)
-        return { nodeId: node.id, markdown: content }
-      })
-    )
+  // Phase 1: Generate AI snippets (parallel, small token calls)
+  const snippets = await generateSnippets({
+    nodes,
+    projectName,
+    apiKey,
+    provider,
+    modelId,
+    signal,
   })
 
-  try {
-    // Execute with controlled concurrency
-    const [projectRules, agentProtocol, ...componentResults] = await Promise.all([
-      projectRulesPromise,
-      agentProtocolPromise,
-      ...componentPromises,
-    ])
+  // Phase 2: Assemble documents deterministically
+  const projectRules = assembleProjectRules({
+    nodes,
+    edges,
+    projectName,
+    snippets,
+  })
+  onFileComplete?.('PROJECT_RULES.md', projectRules)
 
-    const componentSpecs = new Map(
-      componentResults.map((r) => [r.nodeId, r.markdown])
-    )
+  const agentProtocol = assembleAgentProtocol({
+    nodes,
+    projectName,
+    outOfScope,
+  })
+  onFileComplete?.('AGENT_PROTOCOL.md', agentProtocol)
 
-    return { projectRules, agentProtocol, componentSpecs }
-  } catch (error) {
-    // Wrap errors with context
-    if (error instanceof Error) {
-      throw new Error(
-        `AI generation failed: ${error.message}. Please check your API key and try again.`
-      )
-    }
-    throw new Error(
-      'AI generation failed due to an unexpected error. Please try again.'
-    )
+  const componentSpecs = new Map<string, string>()
+  for (const node of nodes) {
+    const content = assembleComponentSpec({
+      node,
+      allNodes: nodes,
+      snippets,
+    })
+    const fileName = `specs/${slugify(node.data.label)}.md`
+    componentSpecs.set(node.id, content)
+    onFileComplete?.(fileName, content)
   }
+
+  return { projectRules, agentProtocol, componentSpecs }
 }
