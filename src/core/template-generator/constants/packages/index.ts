@@ -72,6 +72,15 @@ export function detectLanguage(
 // ============================================================================
 
 /**
+ * Alias map for short tech labels → KNOWN_PACKAGES keys.
+ * Handles cases where default-tech-stacks.ts uses short names
+ * but KNOWN_PACKAGES uses qualified names (e.g., "React" → "React (Vite)").
+ */
+const TECH_ALIASES: Record<string, string> = {
+  React: 'React (Vite)',
+}
+
+/**
  * Get packages for a tech stack item
  * @param techLabel - Tech LABEL from onboarding (e.g., "FastAPI", "PostgreSQL")
  * @param language - Optional language hint for registry selection
@@ -94,6 +103,12 @@ export function getPackagesForTech(
   const direct = KNOWN_PACKAGES[techLabel]
   if (direct) {
     return direct
+  }
+
+  // Try alias (short label → qualified key)
+  const aliased = TECH_ALIASES[techLabel]
+  if (aliased) {
+    return KNOWN_PACKAGES[aliased] ?? []
   }
 
   // No match

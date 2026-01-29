@@ -13,36 +13,38 @@ export function generateBuildOrderSection(nodes: DiagramNode[]): string {
 
   const phases: { name: string; components: string[] }[] = []
 
+  let phaseNum = 1
+
   // Foundation phase
   phases.push({
-    name: 'Phase 1: Foundation',
+    name: `Phase ${String(phaseNum++)}: Foundation`,
     components: ['Project setup, tooling, and dependencies'],
   })
 
-  // Type-based phases with pre-assigned phase numbers
-  const buildPhaseMap: Record<NodeType, { name: string; rationale: string }> = {
+  // Type-based phases with dynamic numbering
+  const buildPhaseLabels: Record<NodeType, { label: string; rationale: string }> = {
     storage: {
-      name: 'Phase 2: Storage',
+      label: 'Storage',
       rationale: 'Schema and data models first (everything depends on data)',
     },
     auth: {
-      name: 'Phase 3: Authentication',
+      label: 'Authentication',
       rationale: 'Auth before protected features',
     },
     backend: {
-      name: 'Phase 4: Backend',
+      label: 'Backend',
       rationale: 'Business logic and API endpoints',
     },
     frontend: {
-      name: 'Phase 5: Frontend',
+      label: 'Frontend',
       rationale: 'UI consuming the backend API',
     },
     external: {
-      name: 'Phase 6: Integration',
+      label: 'Integration',
       rationale: 'Third-party service connections',
     },
     background: {
-      name: 'Phase 7: Background Jobs',
+      label: 'Background Jobs',
       rationale: 'Asynchronous processing',
     },
   }
@@ -50,19 +52,18 @@ export function generateBuildOrderSection(nodes: DiagramNode[]): string {
   for (const type of BUILD_ORDER) {
     const typeNodes = nodesByType.get(type)
     if (typeNodes && typeNodes.length > 0) {
-      const phase = buildPhaseMap[type]
+      const phase = buildPhaseLabels[type]
       const componentItems = typeNodes.map((node) => `- [ ] [${node.id}] ${node.data.label} — ${phase.rationale}`)
       phases.push({
-        name: phase.name,
+        name: `Phase ${String(phaseNum++)}: ${phase.label}`,
         components: componentItems,
       })
     }
   }
 
-  // Polish phase - number is based on how many phases we've added
-  const polishPhaseNum = phases.length + 1
+  // Polish phase
   phases.push({
-    name: `Phase ${String(polishPhaseNum)}: Polish`,
+    name: `Phase ${String(phaseNum)}: Polish`,
     components: [
       '- [ ] Error handling standardization',
       '- [ ] Performance optimization',

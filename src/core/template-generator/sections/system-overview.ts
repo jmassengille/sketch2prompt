@@ -87,13 +87,17 @@ export function generateSystemOverview(
     nodesByType.set(node.data.type, [...existing, node])
   }
 
-  // Build stack detection
+  // Build stack detection from actual node tech stacks
   const stackParts: string[] = []
   if (nodesByType.has('frontend')) {
-    stackParts.push('React/Vue/similar frontend')
+    const techLabels = (nodesByType.get('frontend') ?? []).flatMap((n) => n.data.meta.techStack ?? [])
+    const unique = [...new Set(techLabels)]
+    stackParts.push(unique.length > 0 ? `${unique.join(', ')} frontend` : 'Frontend')
   }
   if (nodesByType.has('backend')) {
-    stackParts.push('Node.js/Python/similar backend')
+    const techLabels = (nodesByType.get('backend') ?? []).flatMap((n) => n.data.meta.techStack ?? [])
+    const unique = [...new Set(techLabels)]
+    stackParts.push(unique.length > 0 ? `${unique.join(', ')} backend` : 'Backend')
   }
   if (nodesByType.has('storage')) {
     const storageNodes = nodesByType.get('storage') ?? []
